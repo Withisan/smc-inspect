@@ -19,6 +19,9 @@
   --ok:#10b981;--wn:#f59e0b;--er:#ef4444;--of:#64748b;--bk:#dc2626;
   --r:12px;--r2:8px;--sh:0 4px 24px rgba(0,0,0,.5);
   --nh:58px;--bnh:68px;--sab:env(safe-area-inset-bottom,0px);
+  --sh:28px; /* syncbar height */
+  --th:36px; /* tabbar height */
+  --hh:calc(var(--nh) + var(--sh) + var(--th)); /* total header = 122px */
 }
 [data-theme=light]{--bg:#f0f4fb;--surf:#fff;--card:#fff;--card2:#f5f8ff;--b:#dde6f5;--b2:#c5d5eb;--t1:#0f1c36;--t2:#3d5a7a;--t3:#7a9bb8;--sh:0 2px 16px rgba(59,130,246,.07)}
 /* v7 additions */
@@ -32,8 +35,8 @@
 .ro-inprocess{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
 
 /* Repair Dashboard Tab */
-.view-tab-bar{position:fixed;left:0;right:0;z-index:198;display:flex;gap:0;background:var(--surf);border-bottom:2px solid var(--b);padding:0 14px;top:calc(var(--nh) + 28px)}
-.vtb{padding:8px 16px;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;border:none;background:none;font-family:inherit;transition:all .15s;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:6px}
+.view-tab-bar{position:fixed;left:0;right:0;z-index:198;display:flex;gap:0;align-items:stretch;background:var(--surf);border-bottom:2px solid var(--b);padding:0 14px;top:calc(var(--nh) + var(--sh));height:var(--th)}
+.vtb{padding:0 16px;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;border:none;background:none;font-family:inherit;transition:all .15s;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:6px;height:100%}
 .vtb.on{color:var(--a);border-bottom-color:var(--a)}
 .vtb:hover{color:var(--t1)}
 
@@ -60,7 +63,7 @@
 .pr-import-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
 
 /* Repair dashboard view */
-#repairView{display:none;padding-top:8px}
+#repairView{display:none}
 .repair-summary-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
 .rs-card{background:var(--card);border:1px solid var(--b);border-radius:var(--r);padding:10px 12px;text-align:center}
 .rs-num{font-size:22px;font-weight:700;margin-bottom:2px}
@@ -99,7 +102,7 @@ body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;background:var(
 .nicn:hover{color:var(--t1)}
 
 /* SYNC BAR */
-#syncbar{position:fixed;top:var(--nh);left:0;right:0;z-index:199;padding:4px 14px;background:var(--surf);border-bottom:1px solid var(--b);font-size:11px;color:var(--t3);display:flex;gap:10px;align-items:center;height:28px}
+#syncbar{position:fixed;top:var(--nh);left:0;right:0;z-index:199;padding:0 14px;background:var(--surf);border-bottom:1px solid var(--b);font-size:11px;color:var(--t3);display:flex;gap:10px;align-items:center;height:var(--sh)}
 .sdot{width:8px;height:8px;border-radius:50%;background:var(--of);flex-shrink:0;transition:background .3s}
 .sdot.ok{background:var(--ok);box-shadow:0 0 0 3px rgba(16,185,129,.2)}
 .sdot.syncing{background:var(--aw);animation:p 1s infinite}
@@ -108,8 +111,7 @@ body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;background:var(
 @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* MAIN */
-/* main padding ปรับเพิ่มเติมใน JS เมื่อทราบ actual header height */
-#main{padding-top:var(--total-header-h,96px);padding-bottom:24px;min-height:100vh}
+#main{padding-top:var(--hh);padding-bottom:24px;min-height:100vh}
 
 /* STATS */
 #stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:12px 14px 0}
@@ -294,7 +296,7 @@ label{font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.3px;text-tr
 
 @media(max-width:699px){
   #bnn{display:flex}
-  #main{padding-bottom:calc(var(--bnh) + var(--sab) + 14px)}
+  #main{padding-bottom:calc(var(--bnh) + var(--sab) + 14px)} /* hh still applies */
   #stats{grid-template-columns:repeat(3,1fr)}
   #stats .sc:first-child{grid-column:1/-1}
   .scn{font-size:20px}
@@ -1488,18 +1490,7 @@ async function init(){
   locs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;sel.appendChild(o);});
   document.getElementById('e-date').value=tod();
   if(!isOnline)document.getElementById('offbanner').classList.add('show');
-  // คำนวณ header height จริง แล้วตั้ง padding-top ให้ถูกต้อง
-  function calcHeaderHeight(){
-    const nh = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nh'))||58;
-    const syncH = 28; // syncbar fixed height
-    const tabH = 38; // tabbar fixed height
-    const offH = document.getElementById('offbanner').classList.contains('show') ? 34 : 0;
-    const total = nh + syncH + tabH + offH;
-    document.documentElement.style.setProperty('--total-header-h', total+'px');
-    document.getElementById('main').style.paddingTop = total+'px';
-  }
-  calcHeaderHeight();
-  window.addEventListener('resize', calcHeaderHeight);
+  // padding-top ถูก set ผ่าน CSS var --hh = 122px (58+28+36)
   // โหลด LINE config ที่บันทึกไว้
   const lineCfg=JSON.parse(localStorage.getItem('smc_line_cfg')||'{}');
   if(lineCfg.webhook) window.RUNTIME_WEBHOOK=lineCfg.webhook;
@@ -1579,7 +1570,7 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
 
 <!-- REPAIR DASHBOARD VIEW -->
 <div id="repairView">
-  <div style="padding:10px 14px 0">
+  <div style="padding:10px 14px 0;min-height:50vh">
     <!-- Summary cards -->
     <div class="repair-summary-cards">
       <div class="rs-card"><div class="rs-num" id="rsCntAll" style="color:var(--a)">0</div><div class="rs-lbl">ทั้งหมด</div></div>
