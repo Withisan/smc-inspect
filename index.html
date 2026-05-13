@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0d1b2e">
-<title>SMC Inspect v7 — S.Khonkaen Foods</title>
+<title>SMC Inspect v8 — S.Khonkaen Foods</title>
 <!-- XLSX for export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onerror="loadXlsxFallback()"></script>
 <script>function loadXlsxFallback(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(s);}</script>
@@ -32,9 +32,9 @@
 .ro-inprocess{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
 
 /* Repair Dashboard Tab */
-.view-tab-bar{display:flex;gap:2px;padding:10px 14px 0;border-bottom:1px solid var(--b)}
-.vtb{padding:8px 14px;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;border-radius:8px 8px 0 0;border:none;background:none;font-family:inherit;transition:all .15s;border-bottom:2px solid transparent}
-.vtb.on{color:var(--a);border-bottom-color:var(--a);background:rgba(59,130,246,.06)}
+.view-tab-bar{position:fixed;left:0;right:0;z-index:198;display:flex;gap:0;background:var(--surf);border-bottom:2px solid var(--b);padding:0 14px;top:calc(var(--nh) + 28px)}
+.vtb{padding:8px 16px;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;border:none;background:none;font-family:inherit;transition:all .15s;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:6px}
+.vtb.on{color:var(--a);border-bottom-color:var(--a)}
 .vtb:hover{color:var(--t1)}
 
 /* Repair list in modal */
@@ -60,7 +60,7 @@
 .pr-import-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
 
 /* Repair dashboard view */
-#repairView{display:none}
+#repairView{display:none;padding-top:8px}
 .repair-summary-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
 .rs-card{background:var(--card);border:1px solid var(--b);border-radius:var(--r);padding:10px 12px;text-align:center}
 .rs-num{font-size:22px;font-weight:700;margin-bottom:2px}
@@ -99,7 +99,7 @@ body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;background:var(
 .nicn:hover{color:var(--t1)}
 
 /* SYNC BAR */
-#syncbar{position:fixed;top:var(--nh);left:0;right:0;z-index:199;padding:5px 14px;background:var(--surf);border-bottom:1px solid var(--b);font-size:11px;color:var(--t3);display:flex;gap:10px;align-items:center}
+#syncbar{position:fixed;top:var(--nh);left:0;right:0;z-index:199;padding:4px 14px;background:var(--surf);border-bottom:1px solid var(--b);font-size:11px;color:var(--t3);display:flex;gap:10px;align-items:center;height:28px}
 .sdot{width:8px;height:8px;border-radius:50%;background:var(--of);flex-shrink:0;transition:background .3s}
 .sdot.ok{background:var(--ok);box-shadow:0 0 0 3px rgba(16,185,129,.2)}
 .sdot.syncing{background:var(--aw);animation:p 1s infinite}
@@ -108,7 +108,8 @@ body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;background:var(
 @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* MAIN */
-#main{padding-top:calc(var(--nh) + 30px);padding-bottom:24px;min-height:100vh}
+/* main padding ปรับเพิ่มเติมใน JS เมื่อทราบ actual header height */
+#main{padding-top:var(--total-header-h,96px);padding-bottom:24px;min-height:100vh}
 
 /* STATS */
 #stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:12px 14px 0}
@@ -301,6 +302,10 @@ label{font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.3px;text-tr
   .fr,.ir{grid-template-columns:1fr}
   .nsrch,.nvbtn{display:none}
   .toast{bottom:calc(var(--bnh) + var(--sab) + 10px)}
+  /* Mobile: repair summary cards */
+  .repair-summary-cards{grid-template-columns:repeat(2,1fr)}
+  /* Mobile: repair nav btn text size */
+  .nicn#repairNavBtn{display:none} /* ซ่อนบน mobile เพราะมี bottom nav แทน */
 }
 @media(min-width:700px) and (max-width:1023px){#cgrid{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:1024px){#cgrid{grid-template-columns:repeat(4,1fr)}}
@@ -459,7 +464,7 @@ function validateRepairNo(val){
 }
 
 // App version
-const APP_VERSION = 'v7.0.0';
+const APP_VERSION = 'v8.0.0';
 const APP_UPDATED = '${new Date().toLocaleDateString("th-TH")}';
 
 // ── LINE MESSAGING API CONFIG (ผ่าน Make.com) ──
@@ -1098,8 +1103,23 @@ async function loadRepairOrders(){
 
 function updateRepairCounts(){
   const open = REPAIR_ORDERS.filter(r=>r.isOpen&&r.prStatus!=='Completed').length;
+  // Tab bar count
   const cnt = document.getElementById('vtb-repair-cnt');
-  if(cnt) cnt.textContent = open > 0 ? `(${open})` : '';
+  if(cnt) cnt.textContent = open > 0 ? `${open}` : '';
+  // Nav badge
+  const badge = document.getElementById('repairNavBadge');
+  if(badge){
+    badge.textContent = open > 0 ? open : '';
+    badge.style.display = open > 0 ? 'block' : 'none';
+  }
+  const bnBadge = document.getElementById('bnRepairBadge');
+  if(bnBadge){
+    bnBadge.textContent = open > 0 ? open : '';
+    bnBadge.style.display = open > 0 ? 'block' : 'none';
+  }
+  // Tab btn color
+  const vtb = document.getElementById('vtb-repair');
+  if(vtb) vtb.style.color = open > 0 ? 'var(--er)' : '';
 }
 
 // Switch View Tab
@@ -1118,6 +1138,7 @@ function switchViewTab(tab){
     fbar.style.display = '';
     vcont.style.display = '';
     repairView.style.display = 'none';
+    render();
   } else {
     machineArea.style.display = 'none';
     fbar.style.display = 'none';
@@ -1467,6 +1488,18 @@ async function init(){
   locs.forEach(l=>{const o=document.createElement('option');o.value=l;o.textContent=l;sel.appendChild(o);});
   document.getElementById('e-date').value=tod();
   if(!isOnline)document.getElementById('offbanner').classList.add('show');
+  // คำนวณ header height จริง แล้วตั้ง padding-top ให้ถูกต้อง
+  function calcHeaderHeight(){
+    const nh = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nh'))||58;
+    const syncH = 28; // syncbar fixed height
+    const tabH = 38; // tabbar fixed height
+    const offH = document.getElementById('offbanner').classList.contains('show') ? 34 : 0;
+    const total = nh + syncH + tabH + offH;
+    document.documentElement.style.setProperty('--total-header-h', total+'px');
+    document.getElementById('main').style.paddingTop = total+'px';
+  }
+  calcHeaderHeight();
+  window.addEventListener('resize', calcHeaderHeight);
   // โหลด LINE config ที่บันทึกไว้
   const lineCfg=JSON.parse(localStorage.getItem('smc_line_cfg')||'{}');
   if(lineCfg.webhook) window.RUNTIME_WEBHOOK=lineCfg.webhook;
@@ -1494,6 +1527,10 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
   <div class="nsrch"><span style="color:var(--t3);font-size:13px">🔍</span><input id="sinput" type="search" placeholder="ค้นหาชื่อ, รหัส, เลขแจ้งซ่อม..." oninput="applyF()" autocomplete="off"></div>
   <div class="nsp"></div>
   <div class="nvbtn"><button class="nvb" id="vt" onclick="setV('t')">☰</button><button class="nvb on" id="vc" onclick="setV('c')">⊞</button><button class="nvb" id="vk" onclick="setV('k')">≡</button></div>
+  <div class="nicn" id="repairNavBtn" onclick="switchViewTab('repair')" title="ใบแจ้งซ่อม" style="position:relative">
+    🔧
+    <span id="repairNavBadge" style="position:absolute;top:-4px;right:-4px;background:var(--er);color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:8px;display:none;min-width:16px;text-align:center"></span>
+  </div>
   <div class="nicn" id="thbtn" onclick="toggleTh()">🌙</div>
   <div class="nicn" onclick="openMenu()">⋯</div>
 </nav>
@@ -1506,8 +1543,16 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
 <div id="offbanner">⚠️ Offline Mode — ข้อมูลจะถูก Sync เมื่อมีการเชื่อมต่ออินเตอร์เน็ต</div>
 
 <div class="view-tab-bar">
-  <button class="vtb on" id="vtb-mach" onclick="switchViewTab('machine')">⚙ เครื่องจักร <span id="vtb-mach-cnt" style="font-size:10px;opacity:.7"></span></button>
-  <button class="vtb" id="vtb-repair" onclick="switchViewTab('repair')">🔧 ใบแจ้งซ่อม <span id="vtb-repair-cnt" style="font-size:10px;opacity:.7;color:var(--er)"></span></button>
+  <button class="vtb on" id="vtb-mach" onclick="switchViewTab('machine')">
+    ⚙ เครื่องจักร
+    <span id="vtb-mach-cnt" style="background:rgba(59,130,246,.15);color:var(--a2);padding:1px 6px;border-radius:10px;font-size:10px"></span>
+  </button>
+  <button class="vtb" id="vtb-repair" onclick="switchViewTab('repair')">
+    🔧 ใบแจ้งซ่อม
+    <span id="vtb-repair-cnt" style="background:rgba(239,68,68,.15);color:var(--er);padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700"></span>
+  </button>
+  <div style="flex:1"></div>
+  <button onclick="openAllHist()" style="border:none;background:none;color:var(--t3);font-size:11px;cursor:pointer;padding:8px 10px;font-family:inherit">📋 ประวัติ</button>
 </div>
 
 <main id="main">
@@ -1534,7 +1579,7 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
 
 <!-- REPAIR DASHBOARD VIEW -->
 <div id="repairView">
-  <div style="padding:12px 14px 0">
+  <div style="padding:10px 14px 0">
     <!-- Summary cards -->
     <div class="repair-summary-cards">
       <div class="rs-card"><div class="rs-num" id="rsCntAll" style="color:var(--a)">0</div><div class="rs-lbl">ทั้งหมด</div></div>
@@ -1562,7 +1607,10 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
   <button class="bnb on" id="bn-h" onclick="botN('h')"><span class="bnb-i">🏠</span><span>หน้าหลัก</span></button>
   <button class="bnb" id="bn-s" onclick="botN('s')"><span class="bnb-i">🔍</span><span>ค้นหา</span></button>
   <div class="bnfab"><button class="fab" onclick="openMenu()">＋</button></div>
-  <button class="bnb" id="bn-z" onclick="openAllHist()"><span class="bnb-i">📋</span><span>ประวัติ</span></button>
+  <button class="bnb" id="bn-z" onclick="switchViewTab('repair');botN('z')" style="position:relative">
+    <span class="bnb-i">🔧</span><span>ซ่อม</span>
+    <span id="bnRepairBadge" style="position:absolute;top:6px;right:8px;background:var(--er);color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:8px;display:none;min-width:14px;text-align:center"></span>
+  </button>
   <button class="bnb" id="bn-e" onclick="exportExcel()"><span class="bnb-i">⬇</span><span>Export</span></button>
 </div></nav>
 
