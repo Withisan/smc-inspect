@@ -23,6 +23,55 @@
 [data-theme=light]{--bg:#f0f4fb;--surf:#fff;--card:#fff;--card2:#f5f8ff;--b:#dde6f5;--b2:#c5d5eb;--t1:#0f1c36;--t2:#3d5a7a;--t3:#7a9bb8;--sh:0 2px 16px rgba(59,130,246,.07)}
 /* v7 additions */
 .ver-badge{font-size:9px;background:rgba(139,92,246,.2);color:#c4b5fd;padding:1px 6px;border-radius:8px;border:1px solid rgba(139,92,246,.3);margin-left:4px}
+
+/* ── REPAIR ORDER SYSTEM ── */
+.ro-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}
+.ro-open{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+.ro-approved{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+.ro-completed{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+.ro-inprocess{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
+
+/* Repair Dashboard Tab */
+.view-tab-bar{display:flex;gap:2px;padding:10px 14px 0;border-bottom:1px solid var(--b)}
+.vtb{padding:8px 14px;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;border-radius:8px 8px 0 0;border:none;background:none;font-family:inherit;transition:all .15s;border-bottom:2px solid transparent}
+.vtb.on{color:var(--a);border-bottom-color:var(--a);background:rgba(59,130,246,.06)}
+.vtb:hover{color:var(--t1)}
+
+/* Repair list in modal */
+.ro-card{background:var(--card);border:1px solid var(--b);border-radius:var(--r2);padding:12px;margin-bottom:8px;position:relative}
+.ro-card.active{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.04)}
+.ro-card.done{border-color:rgba(16,185,129,.3)}
+.ro-hd{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.ro-no{font-size:12px;font-weight:700;color:var(--a2);font-family:monospace}
+.ro-pr{font-size:11px;color:var(--t3);font-family:monospace}
+.ro-body{font-size:13px;color:var(--t1);line-height:1.5}
+.ro-meta{display:flex;gap:12px;margin-top:6px;flex-wrap:wrap}
+.ro-meta-item{font-size:11px;color:var(--t2)}
+.ro-actions{display:flex;gap:6px;margin-top:10px}
+.ro-btn{padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.ro-btn-close{background:rgba(16,185,129,.12);color:var(--ok);border:1px solid rgba(16,185,129,.25)}
+.ro-btn-close:hover{background:rgba(16,185,129,.2)}
+.ro-btn-del{background:rgba(239,68,68,.1);color:var(--er);border:1px solid rgba(239,68,68,.2)}
+.ro-btn-del:hover{background:rgba(239,68,68,.18)}
+
+/* Import PR zone */
+.pr-import-zone{border:2px dashed var(--b2);border-radius:var(--r);padding:16px;text-align:center;cursor:pointer;position:relative;background:var(--card);transition:all .2s}
+.pr-import-zone:hover,.pr-import-zone.dg{border-color:var(--a);background:rgba(59,130,246,.04)}
+.pr-import-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+/* Repair dashboard view */
+#repairView{display:none}
+.repair-summary-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.rs-card{background:var(--card);border:1px solid var(--b);border-radius:var(--r);padding:10px 12px;text-align:center}
+.rs-num{font-size:22px;font-weight:700;margin-bottom:2px}
+.rs-lbl{font-size:10px;color:var(--t2);font-weight:500}
+.repair-list-wrap{display:flex;flex-direction:column;gap:6px}
+
+@media(max-width:699px){
+  .repair-summary-cards{grid-template-columns:repeat(2,1fr)}
+  .view-tab-bar{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .vtb{white-space:nowrap}
+}
 .add-grp-btn{display:flex;align-items:center;justify-content:center;gap:5px;padding:6px 12px;border-radius:8px;border:1px solid var(--b);background:var(--card);color:var(--t2);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:inherit}
 .add-grp-btn.sel{background:var(--a);border-color:var(--a);color:#fff}
 .err-toast{position:fixed;top:calc(var(--nh) + 36px);left:50%;transform:translateX(-50%);background:rgba(239,68,68,.95);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:600;display:none;max-width:calc(100vw - 28px);text-align:center}
@@ -1026,6 +1075,350 @@ async function saveAddMachine(){
 }
 window.saveAddMachine=saveAddMachine;
 
+// ══════════════════════════════════════════════
+// REPAIR ORDER MANAGEMENT SYSTEM
+// ══════════════════════════════════════════════
+
+// Store repair orders — linked กับ machine code
+// Structure: { reqservNo, prNo, machineCode, machineName, detail, status, prStatus, amt, repairDate, closedDate }
+let REPAIR_ORDERS = []; // โหลดจาก Firebase
+let prParsed = null;
+let currentViewTab = 'machine';
+
+// โหลด Repair Orders จาก Firebase
+async function loadRepairOrders(){
+  try{
+    const snap = await getDocs(collection(fdb,'repair_orders'));
+    REPAIR_ORDERS = [];
+    snap.forEach(d => REPAIR_ORDERS.push({id: d.id, ...d.data()}));
+    updateRepairCounts();
+    if(currentViewTab === 'repair') renderRepairView();
+  }catch(e){ console.warn('loadRepairOrders:', e); }
+}
+
+function updateRepairCounts(){
+  const open = REPAIR_ORDERS.filter(r=>r.isOpen&&r.prStatus!=='Completed').length;
+  const cnt = document.getElementById('vtb-repair-cnt');
+  if(cnt) cnt.textContent = open > 0 ? `(${open})` : '';
+}
+
+// Switch View Tab
+function switchViewTab(tab){
+  currentViewTab = tab;
+  ['machine','repair'].forEach(t=>{
+    document.getElementById('vtb-'+t)?.classList.toggle('on', t===tab);
+  });
+  const machineArea = document.getElementById('stats');
+  const fbar = document.getElementById('fbar');
+  const vcont = document.getElementById('vcont');
+  const repairView = document.getElementById('repairView');
+
+  if(tab === 'machine'){
+    machineArea.style.display = '';
+    fbar.style.display = '';
+    vcont.style.display = '';
+    repairView.style.display = 'none';
+  } else {
+    machineArea.style.display = 'none';
+    fbar.style.display = 'none';
+    vcont.style.display = 'none';
+    repairView.style.display = 'block';
+    renderRepairView();
+  }
+}
+window.switchViewTab = switchViewTab;
+
+// Render Repair Dashboard
+function renderRepairView(){
+  const filter = document.getElementById('rsFilter')?.value || '';
+  const search = (document.getElementById('rsSearch')?.value || '').toLowerCase();
+
+  let orders = [...REPAIR_ORDERS];
+  if(filter) orders = orders.filter(r => r.prStatus === filter);
+  if(search) orders = orders.filter(r =>
+    (r.reqservNo||'').toLowerCase().includes(search) ||
+    (r.prNo||'').toLowerCase().includes(search) ||
+    (r.machineName||'').toLowerCase().includes(search) ||
+    (r.machineCode||'').toLowerCase().includes(search) ||
+    (r.detail||'').toLowerCase().includes(search)
+  );
+
+  // Sort: open first, then by date desc
+  orders.sort((a,b) => {
+    if(a.isOpen && !b.isOpen) return -1;
+    if(!a.isOpen && b.isOpen) return 1;
+    return new Date(b.repairDate||0) - new Date(a.repairDate||0);
+  });
+
+  // Update summary
+  const all = REPAIR_ORDERS.length;
+  const open = REPAIR_ORDERS.filter(r=>r.isOpen).length;
+  const approved = REPAIR_ORDERS.filter(r=>r.prStatus==='Approved').length;
+  const done = REPAIR_ORDERS.filter(r=>r.prStatus==='Completed').length;
+  document.getElementById('rsCntAll').textContent = all;
+  document.getElementById('rsCntOpen').textContent = open;
+  document.getElementById('rsCntApproved').textContent = approved;
+  document.getElementById('rsCntDone').textContent = done;
+
+  const el = document.getElementById('repairList');
+  if(!orders.length){
+    el.innerHTML = '<div class="empty"><div class="empty-i">🔧</div><div style="font-size:15px;font-weight:600;color:var(--t2)">ไม่พบใบแจ้งซ่อม</div><div style="font-size:13px;margin-top:6px">Import PR Excel หรือเพิ่มใบแจ้งซ่อมจากหน้าเครื่องจักร</div></div>';
+    return;
+  }
+
+  el.innerHTML = orders.map(r => {
+    const statusMap = {
+      'Inprocess': ['ro-inprocess','🔵 Inprocess'],
+      'Approved': ['ro-approved','⚠ Approved'],
+      'Completed': ['ro-completed','✅ Completed'],
+      'Rejected': ['ro-badge','✗ Rejected'],
+    };
+    const [sCls, sLbl] = statusMap[r.prStatus] || ['ro-badge','— ไม่ระบุ'];
+    const mLink = r.machineCode ? MS.find(m=>m.code===r.machineCode) : null;
+    const isActive = r.isOpen && r.prStatus !== 'Completed';
+
+    return `<div class="ro-card ${isActive?'active':r.prStatus==='Completed'?'done':''}">
+      <div class="ro-hd">
+        <span class="ro-no">${r.reqservNo||'—'}</span>
+        <span class="ro-pr">${r.prNo||''}</span>
+        <span class="ro-badge ${sCls}">${sLbl}</span>
+        ${isActive?'<span style="font-size:10px;color:var(--er);font-weight:700;animation:p 1.5s infinite">● ค้างอยู่</span>':''}
+      </div>
+      ${r.machineCode?`<div style="font-size:12px;color:var(--a2);margin-bottom:4px">⚙ ${r.machineCode} — ${r.machineName||''}</div>`:'<div style="font-size:12px;color:var(--t3);margin-bottom:4px">⚙ ยังไม่ได้ผูกกับเครื่องจักร</div>'}
+      <div class="ro-body">${r.detail||'—'}</div>
+      <div class="ro-meta">
+        ${r.repairDate?`<span class="ro-meta-item">📅 แจ้ง ${r.repairDate}</span>`:''}
+        ${r.amt?`<span class="ro-meta-item">💰 ${Number(r.amt).toLocaleString()} บาท</span>`:''}
+        ${r.prStatus2?`<span class="ro-meta-item">📋 ${r.prStatus2}</span>`:''}
+        ${r.closedDate?`<span class="ro-meta-item">✅ ปิด ${r.closedDate}</span>`:''}
+      </div>
+      <div class="ro-actions">
+        ${isActive?`<button class="ro-btn ro-btn-close" onclick="closeRepairOrder('${r.id}')">✅ ปิดใบแจ้งซ่อม</button>`:''}
+        ${r.machineCode?`<button class="ro-btn" style="background:rgba(59,130,246,.1);color:var(--a2);border:1px solid rgba(59,130,246,.2)" onclick="openEdByCode('${r.machineCode}')">⚙ ดูเครื่องจักร</button>`:`<button class="ro-btn" style="background:rgba(139,92,246,.1);color:#c4b5fd;border:1px solid rgba(139,92,246,.2)" onclick="linkRepairToMachine('${r.id}')">🔗 ผูกเครื่องจักร</button>`}
+        <button class="ro-btn ro-btn-del" onclick="deleteRepairOrder('${r.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+window.renderRepairView = renderRepairView;
+
+// Open machine edit from repair order
+function openEdByCode(code){
+  const idx = MS.findIndex(m=>m.code===code);
+  if(idx>=0){
+    switchViewTab('machine');
+    setTimeout(()=>openEd(idx), 300);
+  } else toast('⚠ ไม่พบเครื่องจักรรหัส '+code);
+}
+window.openEdByCode = openEdByCode;
+
+// Close repair order
+async function closeRepairOrder(id){
+  try{
+    const ro = REPAIR_ORDERS.find(r=>r.id===id);
+    if(!ro) return;
+    await setDoc(doc(fdb,'repair_orders',id),{
+      ...ro, isOpen:false, prStatus:'Completed',
+      closedDate: tod(), closedAt:serverTimestamp()
+    });
+    // อัปเดตสถานะเครื่องจักรถ้าผูกไว้
+    if(ro.machineCode){
+      const m = MS.find(x=>x.code===ro.machineCode);
+      if(m && m.repairNo===ro.reqservNo){
+        m.repairNo=''; m.status='ปกติ';
+        await saveToFB(m);
+      }
+    }
+    toast('✅ ปิดใบแจ้งซ่อม '+ro.reqservNo+' แล้ว');
+    await loadRepairOrders();
+    render();
+  }catch(e){toast('✗ ปิดไม่ได้: '+e.message);}
+}
+window.closeRepairOrder = closeRepairOrder;
+
+// Delete repair order
+async function deleteRepairOrder(id){
+  if(!confirm('ลบใบแจ้งซ่อมนี้?')) return;
+  try{
+    const {deleteDoc} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    await deleteDoc(doc(fdb,'repair_orders',id));
+    await loadRepairOrders();
+    toast('✓ ลบแล้ว');
+  }catch(e){
+    // fallback: mark as deleted
+    const ro = REPAIR_ORDERS.find(r=>r.id===id);
+    if(ro) await setDoc(doc(fdb,'repair_orders',id),{...ro,deleted:true});
+    REPAIR_ORDERS = REPAIR_ORDERS.filter(r=>r.id!==id);
+    renderRepairView();
+    toast('✓ ลบแล้ว');
+  }
+}
+window.deleteRepairOrder = deleteRepairOrder;
+
+// Link repair to machine
+function linkRepairToMachine(id){
+  const ro = REPAIR_ORDERS.find(r=>r.id===id);
+  if(!ro) return;
+  const code = prompt(`ใส่รหัสเครื่องจักรที่ต้องการผูก:
+(เช่น BM01, CS02)
+ใบแจ้งซ่อม: ${ro.reqservNo}
+รายละเอียด: ${ro.detail||''}`);
+  if(!code) return;
+  const m = MS.find(x=>x.code.toUpperCase()===code.toUpperCase());
+  if(!m){toast('⚠ ไม่พบรหัส '+code);return;}
+  setDoc(doc(fdb,'repair_orders',id),{...ro, machineCode:m.code, machineName:m.name}).then(()=>{
+    // อัปเดตสถานะเครื่องจักร
+    m.repairNo = ro.reqservNo; m.repairNote = ro.detail||'';
+    if(m.status==='ปกติ'||!m.status) m.status='ผิดปกติ';
+    saveToFB(m).then(()=>{render();});
+    loadRepairOrders();
+    toast(`✓ ผูก ${ro.reqservNo} กับ ${m.code} ${m.name} แล้ว`);
+  });
+}
+window.linkRepairToMachine = linkRepairToMachine;
+
+// ── PR EXCEL IMPORT ──
+function openPRImport(){ ov('prImportOv',true); prParsed=null; document.getElementById('prImportBtn').disabled=true; document.getElementById('prImportBtn').style.opacity='.4'; document.getElementById('prImportResult').style.display='none'; document.getElementById('prProg').style.display='none'; }
+window.openPRImport = openPRImport;
+function prDrag(e,on){e.preventDefault();document.getElementById('prDropZone').classList.toggle('dg',on);}
+function prFileDrop(e){e.preventDefault();document.getElementById('prDropZone').classList.remove('dg');const f=e.dataTransfer.files[0];if(f)processPRFile(f);}
+function prFileSelected(e){const f=e.target.files[0];if(f)processPRFile(f);}
+window.prDrag=prDrag;window.prFileDrop=prFileDrop;window.prFileSelected=prFileSelected;
+
+async function processPRFile(file){
+  if(typeof XLSX==='undefined'){toast('⏳ โหลด XLSX...');await new Promise(r=>setTimeout(r,1500));}
+  if(typeof XLSX==='undefined'){toast('✗ โหลด XLSX ไม่ได้');return;}
+  const prog=document.getElementById('prProg');prog.style.display='flex';
+  document.getElementById('prProgFill').style.width='10%';document.getElementById('prProgLbl').textContent='กำลังอ่านไฟล์...';
+  try{
+    const buf=await file.arrayBuffer();
+    document.getElementById('prProgFill').style.width='40%';document.getElementById('prProgLbl').textContent='วิเคราะห์ Sheet...';
+    const wb=XLSX.read(buf,{type:'array',cellDates:true});
+    // หา Sheet PR 2026
+    const sheetName = wb.SheetNames.find(s=>s.includes('PR 2026')||s.includes('PR2026'));
+    if(!sheetName) throw new Error('ไม่พบ Sheet "PR 2026" — ตรวจสอบไฟล์อีกครั้ง');
+    const ws=wb.Sheets[sheetName];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    document.getElementById('prProgFill').style.width='70%';document.getElementById('prProgLbl').textContent='อ่านข้อมูล...';
+
+    // Header: PR No., Revision, วันที่ขอ, PR Type, Material Type, Department, จำนวนเงิน, สถานะStatus, รายละเอียดงาน, สถานะ, เลขที่แจ้งซ่อม, วันที่แจ้งซ่อม
+    const hdr=rows[0];
+    const ci=n=>hdr.findIndex(h=>String(h||'').includes(n));
+    const cPR=0, cStatus=ci('สถานะStatus')||7, cDetail=ci('รายละเอียด')||8;
+    const cStatus2=ci('สถานะ')>cStatus?ci('สถานะ'):9;
+    const cReqServ=ci('เลขที่แจ้งซ่อม')||10, cRepairDate=ci('วันที่แจ้งซ่อม')||11;
+    const cAmt=ci('จำนวนเงิน')||6;
+
+    const parsed=[];
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];
+      const prNo=String(r[cPR]||'').trim();
+      const reqserv=String(r[cReqServ]||'').trim();
+      const status=String(r[cStatus]||'').trim();
+      const detail=String(r[cDetail]||'').trim();
+      if(!prNo) continue;
+      // เฉพาะ SMC department
+      const dept=String(r[5]||'').toLowerCase();
+      if(dept && !dept.includes('smc') && !dept.includes('ฝ่ายผลิต')) continue;
+      const repairDateRaw=r[cRepairDate];
+      const repairDate=repairDateRaw instanceof Date?repairDateRaw.toISOString().split('T')[0]:String(repairDateRaw||'').split('T')[0]||'';
+      parsed.push({
+        prNo, reqservNo:reqserv||prNo, status2:String(r[cStatus2]||'').trim(),
+        prStatus:status, detail, amt:r[cAmt]||0,
+        repairDate, isOpen:['Approved','Inprocess'].includes(status),
+        machineCode:'', machineName:'', deleted:false
+      });
+    }
+
+    document.getElementById('prProgFill').style.width='100%';document.getElementById('prProgLbl').textContent=`✓ พบ ${parsed.length} รายการ`;
+    prParsed=parsed;
+
+    // สรุปผล
+    const withReqserv=parsed.filter(p=>p.reqservNo&&p.reqservNo!==p.prNo).length;
+    const active=parsed.filter(p=>p.isOpen).length;
+    const done=parsed.filter(p=>p.prStatus==='Completed').length;
+    document.getElementById('prImportResult').style.display='block';
+    document.getElementById('prImportResult').innerHTML=
+      `<div style="font-weight:700;margin-bottom:8px;color:var(--ag)">✓ วิเคราะห์แล้ว</div>`+
+      `ทั้งหมด: <b>${parsed.length}</b> รายการ<br>`+
+      `มีเลขแจ้งซ่อม: <b>${withReqserv}</b> รายการ<br>`+
+      `ค้างดำเนินการ: <b style="color:var(--er)">${active}</b> รายการ<br>`+
+      `เสร็จสิ้นแล้ว: <b style="color:var(--ag)">${done}</b> รายการ<br><br>`+
+      `<span style="color:var(--aw)">⚠ หลัง Import ต้องผูกใบแจ้งซ่อมกับเครื่องจักรด้วยตนเอง<br>หรือระบบจะ Auto-match จากคำในรายละเอียด</span>`;
+
+    const btn=document.getElementById('prImportBtn');
+    btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';
+    btn.textContent=`นำเข้า ${parsed.length} รายการ`;
+  }catch(e){
+    document.getElementById('prProgLbl').textContent='✗ '+e.message;
+    document.getElementById('prProgFill').style.background='var(--er)';
+    toast('✗ '+e.message);
+  }
+}
+
+async function confirmPRImport(){
+  if(!prParsed||!prParsed.length) return;
+  const btn=document.getElementById('prImportBtn');
+  btn.textContent='⏳ กำลัง Import...';btn.disabled=true;
+
+  let added=0,updated=0;
+  // Auto-match machine จาก keyword ในรายละเอียด
+  function autoMatchMachine(detail){
+    if(!detail) return null;
+    const dl=detail.toLowerCase();
+    // หา machine code pattern เช่น AM01, BM01
+    const codeMatch=dl.match(/([a-z]{2}[0-9]{2})/i);
+    if(codeMatch){
+      const found=MS.find(m=>m.code.toLowerCase()===codeMatch[1].toLowerCase());
+      if(found) return found;
+    }
+    // หาจากชื่อเครื่อง
+    return MS.find(m=>dl.includes(m.name.toLowerCase().substring(0,8))) || null;
+  }
+
+  try{
+    // Batch write
+    const batch=writeBatch(fdb);
+    for(const p of prParsed){
+      const id=p.reqservNo.replace(/[^a-zA-Z0-9]/g,'_') || p.prNo.replace(/[^a-zA-Z0-9]/g,'_');
+      // check existing
+      const existing=REPAIR_ORDERS.find(r=>r.reqservNo===p.reqservNo||r.prNo===p.prNo);
+      // auto match machine
+      const matched=autoMatchMachine(p.detail);
+      const machineCode=existing?.machineCode || matched?.code || '';
+      const machineName=existing?.machineName || matched?.name || '';
+      batch.set(doc(fdb,'repair_orders',id),{
+        ...p, machineCode, machineName,
+        importedAt:new Date().toISOString(),
+        updatedAt:serverTimestamp()
+      });
+      if(existing) updated++;else added++;
+    }
+    await batch.commit();
+
+    // อัปเดตสถานะเครื่องที่ auto-match
+    let autoLinked=0;
+    for(const p of prParsed){
+      if(p.isOpen){
+        const matched=autoMatchMachine(p.detail);
+        if(matched&&!matched.repairNo){
+          matched.repairNo=p.reqservNo;matched.repairNote=p.detail||'';
+          if(matched.status==='ปกติ'||!matched.status) matched.status='ผิดปกติ';
+          await saveToFB(matched);autoLinked++;
+        }
+      }
+    }
+
+    ov('prImportOv',false);
+    await loadRepairOrders();render();
+    toast(`✓ Import สำเร็จ! เพิ่ม ${added} | อัปเดต ${updated} | Auto-link ${autoLinked} เครื่อง`);
+  }catch(e){
+    toast('✗ Import ไม่ได้: '+e.message);
+    btn.textContent='นำเข้าใบแจ้งซ่อม';btn.disabled=false;btn.style.opacity='1';
+  }
+}
+window.confirmPRImport=confirmPRImport;
+
 // ── LINE SETTINGS ──
 function openLineSettings(){
   // โหลดค่าที่บันทึกไว้
@@ -1079,6 +1472,7 @@ async function init(){
   if(lineCfg.webhook) window.RUNTIME_WEBHOOK=lineCfg.webhook;
   if(lineCfg.groupId) window.RUNTIME_GROUPID=lineCfg.groupId;
   startSync();
+  loadRepairOrders();
   // Check old data
   try{
     const req=indexedDB.open('smcInspV5',2);
@@ -1111,6 +1505,11 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
 </div>
 <div id="offbanner">⚠️ Offline Mode — ข้อมูลจะถูก Sync เมื่อมีการเชื่อมต่ออินเตอร์เน็ต</div>
 
+<div class="view-tab-bar">
+  <button class="vtb on" id="vtb-mach" onclick="switchViewTab('machine')">⚙ เครื่องจักร <span id="vtb-mach-cnt" style="font-size:10px;opacity:.7"></span></button>
+  <button class="vtb" id="vtb-repair" onclick="switchViewTab('repair')">🔧 ใบแจ้งซ่อม <span id="vtb-repair-cnt" style="font-size:10px;opacity:.7;color:var(--er)"></span></button>
+</div>
+
 <main id="main">
   <div id="stats">
     <div class="sc" style="--cc:var(--a)" onclick="fStat('')"><div class="scn" id="nAll">0</div><div class="scl">เครื่องจักรทั้งหมด</div></div>
@@ -1133,6 +1532,32 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
   </div>
 </main>
 
+<!-- REPAIR DASHBOARD VIEW -->
+<div id="repairView">
+  <div style="padding:12px 14px 0">
+    <!-- Summary cards -->
+    <div class="repair-summary-cards">
+      <div class="rs-card"><div class="rs-num" id="rsCntAll" style="color:var(--a)">0</div><div class="rs-lbl">ทั้งหมด</div></div>
+      <div class="rs-card"><div class="rs-num" id="rsCntOpen" style="color:var(--er)">0</div><div class="rs-lbl">🔴 รอดำเนินการ</div></div>
+      <div class="rs-card"><div class="rs-num" id="rsCntApproved" style="color:var(--aw)">0</div><div class="rs-lbl">⚠ อนุมัติแล้ว</div></div>
+      <div class="rs-card"><div class="rs-num" id="rsCntDone" style="color:var(--ok)">0</div><div class="rs-lbl">✅ เสร็จสิ้น</div></div>
+    </div>
+    <!-- Filter -->
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <select class="fs" id="rsFilter" onchange="renderRepairView()" style="background:var(--card);border:1px solid var(--b);border-radius:var(--r2);padding:7px 11px;color:var(--t1);font-size:12px;font-family:inherit;outline:none">
+        <option value="">สถานะทั้งหมด</option>
+        <option value="Inprocess">🔴 Inprocess</option>
+        <option value="Approved">⚠ Approved</option>
+        <option value="Completed">✅ Completed</option>
+      </select>
+      <div class="nsrch" style="flex:1;max-width:260px"><span style="color:var(--t3);font-size:13px">🔍</span><input id="rsSearch" type="search" placeholder="ค้นหาเลขแจ้งซ่อม, เครื่องจักร..." oninput="renderRepairView()" style="flex:1;background:none;border:none;outline:none;color:var(--t1);font-size:13px"></div>
+      <button onclick="openPRImport()" style="padding:7px 12px;background:rgba(59,130,246,.1);color:var(--a2);border:1px solid rgba(59,130,246,.2);border-radius:var(--r2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">⬆ Import PR Excel</button>
+    </div>
+    <!-- Repair List -->
+    <div class="repair-list-wrap" id="repairList"></div>
+  </div>
+</div>
+
 <nav id="bnn"><div class="bni">
   <button class="bnb on" id="bn-h" onclick="botN('h')"><span class="bnb-i">🏠</span><span>หน้าหลัก</span></button>
   <button class="bnb" id="bn-s" onclick="botN('s')"><span class="bnb-i">🔍</span><span>ค้นหา</span></button>
@@ -1147,6 +1572,7 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
   <div class="menus">
     <div class="menu-hdl"></div>
     <div class="menu-ttl">SMC Inspect — S.Khonkaen Foods</div>
+    <div class="mi" onclick="cMenu();switchViewTab('repair')"><div class="mi-ico" style="background:rgba(239,68,68,.1)">🔧</div><div><div class="mi-lbl">ดูใบแจ้งซ่อมทั้งหมด</div><div class="mi-sub">สถานะใบแจ้งซ่อม Linked กับเครื่องจักร</div></div></div>
     <div class="mi" onclick="cMenu();openAllHist()"><div class="mi-ico" style="background:rgba(245,158,11,.1)">📋</div><div><div class="mi-lbl">ประวัติการตรวจทั้งหมด</div><div class="mi-sub">ดูบันทึกย้อนหลังจาก Firebase</div></div></div>
     <div class="mi" onclick="cMenu();exportExcel()"><div class="mi-ico" style="background:rgba(59,130,246,.1)">⬇</div><div><div class="mi-lbl">Export Excel</div><div class="mi-sub">ทะเบียน + ใบแจ้งซ่อม + ประวัติ</div></div></div>
     <div class="mi" onclick="cMenu();openLineSettings()"><div class="mi-ico" style="background:rgba(0,185,0,.1)">💬</div><div><div class="mi-lbl">ตั้งค่า LINE แจ้งเตือน</div><div class="mi-sub">ใส่ Token หรือ Make.com Webhook</div></div></div>
@@ -1222,6 +1648,34 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
   </div>
 </div>
 <div class="ov" id="migProg"><div class="md"><div class="mdr"></div><div class="mhd"><div><div class="mtt">🔄 กำลังย้ายข้อมูล...</div></div></div><div class="mbd"><div class="pbg"><div class="pfl" id="mg-fill" style="width:0%"></div></div><div style="font-size:13px;color:var(--t2);margin-top:8px" id="mg-lbl">กำลังเริ่มต้น...</div></div></div></div>
+
+<!-- PR IMPORT MODAL -->
+<div class="ov" id="prImportOv" onclick="ovClose(event,'prImportOv')">
+  <div class="md">
+    <div class="mdr"></div>
+    <div class="mhd">
+      <div><div class="mtt">⬆ Import ใบแจ้งซ่อม (PR Excel)</div><div class="mst">นำเข้าไฟล์จากระบบ ERP — Sheet "PR 2026"</div></div>
+      <button class="mcl" onclick="ov('prImportOv',false)">✕</button>
+    </div>
+    <div class="mbd">
+      <div class="pr-import-zone" id="prDropZone" ondragover="prDrag(event,true)" ondragleave="prDrag(event,false)" ondrop="prFileDrop(event)">
+        <input type="file" accept=".xlsx,.xls" id="prFileInput" onchange="prFileSelected(event)">
+        <div style="font-size:28px;margin-bottom:8px">📊</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">วางไฟล์ Excel หรือคลิกเลือก</div>
+        <div style="font-size:12px;color:var(--t2)">รองรับไฟล์ที่มี Sheet ชื่อ "PR 2026"<br>คอลัมน์: PR No., สถานะ, รายละเอียดงาน, เลขที่แจ้งซ่อม</div>
+      </div>
+      <div style="display:none;flex-direction:column;gap:6px" id="prProg">
+        <div style="font-size:12px;color:var(--t2)" id="prProgLbl">กำลังอ่าน...</div>
+        <div style="background:var(--b);border-radius:4px;height:6px;overflow:hidden"><div id="prProgFill" style="height:100%;background:var(--a);border-radius:4px;transition:width .3s;width:0%"></div></div>
+      </div>
+      <div id="prImportResult" style="display:none;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:var(--r);padding:12px;font-size:13px;line-height:1.8"></div>
+    </div>
+    <div class="mft">
+      <button class="btn-g" onclick="ov('prImportOv',false)">ปิด</button>
+      <button class="btn-p" id="prImportBtn" onclick="confirmPRImport()" disabled style="opacity:.4;cursor:not-allowed">นำเข้าใบแจ้งซ่อม</button>
+    </div>
+  </div>
+</div>
 
 <!-- ADD MACHINE MODAL -->
 <div class="ov" id="addMachineOv" onclick="ovClose(event,'addMachineOv')">
