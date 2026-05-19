@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0d1b2e">
-<title>SMC Inspect v8 — S.Khonkaen Foods</title>
+<title>SMC Inspect v9 — S.Khonkaen Foods</title>
 <!-- XLSX for export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onerror="loadXlsxFallback()"></script>
 <script>function loadXlsxFallback(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(s);}</script>
@@ -17,15 +17,422 @@
   --t1:#e8f1ff;--t2:#8eadd4;--t3:#506a8a;
   --a:#3b82f6;--a2:#60a5fa;--ag:#10b981;--aw:#f59e0b;--ae:#ef4444;--at:#06b6d4;
   --ok:#10b981;--wn:#f59e0b;--er:#ef4444;--of:#64748b;--bk:#dc2626;
-  --r:12px;--r2:8px;--sh:0 4px 24px rgba(0,0,0,.5);
+  --r:12px;--r2:8px;--shadow:0 4px 24px rgba(0,0,0,.5);
   --nh:58px;--bnh:68px;--sab:env(safe-area-inset-bottom,0px);
-  --sh:28px; /* syncbar height */
-  --th:36px; /* tabbar height */
-  --hh:calc(var(--nh) + var(--sh) + var(--th)); /* total header = 122px */
+  --sbh:28px;
+  --tbh:36px;
+  --hh:calc(var(--nh) + var(--sbh) + var(--tbh));
 }
-[data-theme=light]{--bg:#f0f4fb;--surf:#fff;--card:#fff;--card2:#f5f8ff;--b:#dde6f5;--b2:#c5d5eb;--t1:#0f1c36;--t2:#3d5a7a;--t3:#7a9bb8;--sh:0 2px 16px rgba(59,130,246,.07)}
+[data-theme=light]{--bg:#f0f4fb;--surf:#fff;--card:#fff;--card2:#f5f8ff;--b:#dde6f5;--b2:#c5d5eb;--t1:#0f1c36;--t2:#3d5a7a;--t3:#7a9bb8;--shadow:0 2px 16px rgba(59,130,246,.07)}
 /* v7 additions */
 .ver-badge{font-size:9px;background:rgba(139,92,246,.2);color:#c4b5fd;padding:1px 6px;border-radius:8px;border:1px solid rgba(139,92,246,.3);margin-left:4px}
+
+/* ── DAILY CHECKLIST ── */
+
+/* ── Layout constants ─────────────────────────────────── */
+/* dcl-sticky height = 88px desktop / ~96px mobile        */
+:root{ --dcl-sh:88px; }
+@media(max-width:699px){ :root{ --dcl-sh:96px; } }
+
+/* ── Sticky command bar ─────────────────────────────────── */
+#dcl-sticky{
+  position:sticky;
+  top:var(--hh);          /* directly under tab bar */
+  z-index:90;
+  background:var(--surf);
+  border-bottom:2px solid var(--b);
+  padding:6px 14px 5px;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  box-shadow:0 3px 14px rgba(0,0,0,.4);
+}
+
+/* Row 1: date + inspector + submit */
+.dcl-row1{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
+  min-width:0;
+}
+.dcl-datebox{
+  font-size:11px;
+  font-weight:700;
+  color:var(--a2);
+  white-space:nowrap;
+  flex-shrink:0;
+  background:rgba(59,130,246,.1);
+  border:1px solid rgba(59,130,246,.2);
+  border-radius:6px;
+  padding:3px 8px;
+}
+#dcl-inspector{
+  flex:1;
+  min-width:80px;
+  max-width:180px;
+  background:var(--card);
+  border:1px solid var(--b);
+  border-radius:6px;
+  padding:4px 10px;
+  color:var(--t1);
+  font-size:13px;
+  font-family:inherit;
+  outline:none;
+  transition:border-color .15s;
+}
+#dcl-inspector:focus{ border-color:var(--a); }
+.dcl-submit-btn{
+  padding:5px 14px;
+  background:var(--ag);
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  font-family:inherit;
+  white-space:nowrap;
+  flex-shrink:0;
+  transition:all .15s;
+}
+.dcl-submit-btn:disabled{ opacity:.4; cursor:not-allowed; background:var(--of); }
+.dcl-submit-btn:not(:disabled):hover{ background:#059669; transform:translateY(-1px); }
+.dcl-submit-btn:not(:disabled):active{ transform:scale(.96); }
+
+/* Row 2: KPI pills + progress */
+.dcl-row2{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:nowrap;
+  min-width:0;
+  overflow-x:auto;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.dcl-row2::-webkit-scrollbar{ display:none; }
+.dcl-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  padding:2px 8px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.dp-all  { background:rgba(59,130,246,.12); color:var(--a2);  border:1px solid rgba(59,130,246,.2);}
+.dp-done { background:rgba(16,185,129,.12); color:var(--ok);  border:1px solid rgba(16,185,129,.2);}
+.dp-warn { background:rgba(245,158,11,.12); color:var(--wn);  border:1px solid rgba(245,158,11,.2);}
+.dp-err  { background:rgba(239,68,68,.12);  color:var(--er);  border:1px solid rgba(239,68,68,.2);}
+.dp-left { background:rgba(100,116,139,.1); color:var(--t2);  border:1px solid rgba(100,116,139,.2);}
+.dcl-prog-group{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:80px;
+}
+.dcl-prog-bg{
+  flex:1;
+  background:var(--b);
+  border-radius:4px;
+  height:7px;
+  overflow:hidden;
+  min-width:40px;
+}
+.dcl-prog-fill{
+  height:100%;
+  border-radius:4px;
+  background:linear-gradient(90deg,var(--a),var(--ag));
+  transition:width .45s cubic-bezier(.4,0,.2,1);
+  will-change:width;
+}
+.dcl-prog-pct{
+  font-size:12px;
+  font-weight:800;
+  color:var(--a2);
+  min-width:32px;
+  text-align:right;
+  flex-shrink:0;
+}
+
+/* ── Done today banner ────────────────────────────────── */
+.dcl-done-banner{
+  margin:0 14px 6px;
+  padding:8px 14px;
+  background:rgba(16,185,129,.08);
+  border:1px solid rgba(16,185,129,.25);
+  border-radius:8px;
+  font-size:12px;
+  color:var(--ag);
+  text-align:center;
+  display:none;
+}
+.dcl-done-banner.show{ display:block; }
+
+/* ── Filter bar ─────────────────────────────────────── */
+.dcl-filter-bar{
+  display:flex;
+  gap:5px;
+  padding:6px 14px;
+  border-bottom:1px solid var(--b);
+  background:var(--surf);
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  scrollbar-width:none;
+  align-items:center;
+  -webkit-overflow-scrolling:touch;
+  flex-shrink:0;
+}
+.dcl-filter-bar::-webkit-scrollbar{ display:none; }
+.dcl-search-wrap{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  background:var(--card);
+  border:1px solid var(--b);
+  border-radius:20px;
+  padding:3px 10px;
+  flex-shrink:0;
+  min-width:110px;
+  max-width:170px;
+}
+.dcl-search-wrap input{
+  background:none;
+  border:none;
+  outline:none;
+  color:var(--t1);
+  font-size:12px;
+  font-family:inherit;
+  width:100%;
+}
+.dcl-fb{
+  padding:3px 10px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:600;
+  border:1px solid var(--b);
+  background:var(--card);
+  color:var(--t2);
+  cursor:pointer;
+  font-family:inherit;
+  transition:all .12s;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.dcl-fb.on{ background:var(--a); border-color:var(--a); color:#fff; }
+.dcl-fb:hover:not(.on){ border-color:var(--b2); color:var(--t1); }
+
+/* ── Section header ──────────────────────────────────── */
+.dcl-section{
+  font-size:10px;
+  font-weight:700;
+  color:var(--t3);
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  padding:8px 14px 3px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:var(--bg);
+  position:sticky;
+  top:calc(var(--hh) + var(--dcl-sh));
+  z-index:70;
+}
+.dcl-section::after{ content:''; flex:1; height:1px; background:var(--b); }
+.dcl-sec-cnt{
+  background:var(--card);
+  color:var(--t2);
+  border-radius:8px;
+  padding:1px 7px;
+  font-size:10px;
+  border:1px solid var(--b);
+  white-space:nowrap;
+}
+
+/* ── Inspection item — COMPACT ───────────────────────── */
+.dcl-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 14px;
+  border-bottom:1px solid var(--b);
+  transition:background .1s;
+  /* NO cursor:pointer — avoid accidental taps */
+}
+.dcl-item:active{ background:var(--card2); }
+/* Status border-left indicator */
+.dcl-item.checked{ border-left:3px solid var(--ok); }
+.dcl-item.warn   { border-left:3px solid var(--wn); }
+.dcl-item.err    { border-left:3px solid var(--er); }
+
+/* Item body */
+.dcl-body{ flex:1; min-width:0; }
+.dcl-name-row{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  flex-wrap:nowrap;
+  margin-bottom:2px;
+}
+.dcl-code{
+  font-size:11px;
+  font-weight:700;
+  color:var(--a2);
+  font-family:monospace;
+  flex-shrink:0;
+}
+.dcl-grp{
+  font-size:9px;
+  font-weight:700;
+  padding:1px 5px;
+  border-radius:5px;
+  flex-shrink:0;
+}
+.dcl-crit{
+  font-size:9px;
+  color:var(--er);
+  font-weight:700;
+  flex-shrink:0;
+  animation:p 2s infinite;
+}
+.dcl-name{
+  font-size:13px;
+  font-weight:500;
+  color:var(--t1);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+}
+.dcl-meta{
+  font-size:10px;
+  color:var(--t3);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* Quick action buttons */
+.dcl-btns{
+  display:flex;
+  gap:4px;
+  flex-shrink:0;
+}
+.dcl-btn{
+  width:38px;
+  height:38px;
+  border-radius:8px;
+  border:1px solid var(--b);
+  background:var(--card);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  transition:all .12s;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.dcl-btn:active{ transform:scale(.88); }
+.dcl-btn.aok{ background:rgba(16,185,129,.2); border-color:var(--ok); box-shadow:0 0 0 2px rgba(16,185,129,.15); }
+.dcl-btn.awn{ background:rgba(245,158,11,.2); border-color:var(--wn); box-shadow:0 0 0 2px rgba(245,158,11,.15); }
+.dcl-btn.aer{ background:rgba(239,68,68,.2);  border-color:var(--er); box-shadow:0 0 0 2px rgba(239,68,68,.15); }
+.dcl-btn-more{
+  width:28px;
+  height:38px;
+  border-radius:8px;
+  border:1px solid var(--b);
+  background:none;
+  cursor:pointer;
+  color:var(--t3);
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .12s;
+  flex-shrink:0;
+  touch-action:manipulation;
+}
+.dcl-btn-more:hover{ color:var(--a2); border-color:var(--a); }
+
+/* Animate on set */
+@keyframes dcl-pop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+.dcl-btn.just-set{ animation:dcl-pop .22s ease; }
+
+/* ── Empty state ─────────────────────────────────────── */
+.dcl-empty{
+  text-align:center;
+  padding:36px 20px;
+  color:var(--t3);
+}
+.dcl-empty-ico{ font-size:38px; margin-bottom:8px; }
+
+/* ── Content area — NO extra spacing ─────────────────── */
+#dclContent{
+  padding-bottom:calc(var(--bnh) + var(--sab) + 20px);
+  /* NO min-height, NO margin-top */
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media(max-width:399px){
+  .dcl-btn{ width:34px; height:34px; font-size:14px; }
+  .dcl-name{ font-size:12px; }
+  .dcl-row1{ flex-wrap:wrap; }
+  #dcl-inspector{ max-width:120px; }
+}
+@media(min-width:700px){
+  .dcl-item{ padding:9px 20px; }
+  .dcl-name{ max-width:420px; }
+  :root{ --dcl-sh:78px; }
+  .dcl-btn{ width:40px; height:40px; }
+  #dclContent{ padding-bottom:20px; }
+}
+@media(min-width:1200px){
+  #dclContent{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    align-items:start;
+    gap:0;
+  }
+  .dcl-section{ grid-column:1/-1; }
+}
+
+/* ── KPI DASHBOARD ── *//* ── KPI DASHBOARD ── *//* ── KPI DASHBOARD ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px 14px 0}
+.kpi-card{background:var(--card);border:1px solid var(--b);border-radius:var(--r);padding:14px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kc,var(--a))}
+.kpi-n{font-size:32px;font-weight:700;color:var(--kc,var(--a));line-height:1;margin-bottom:4px}
+.kpi-l{font-size:11px;color:var(--t2);font-weight:500}
+.kpi-sub{font-size:11px;color:var(--t3);margin-top:4px}
+.kpi-trend{font-size:11px;font-weight:700;margin-top:4px}
+.trend-up{color:var(--ok)}.trend-dn{color:var(--er)}
+.kpi-bar-wrap{margin-top:8px}
+.kpi-bar-bg{background:var(--b);border-radius:4px;height:6px;overflow:hidden}
+.kpi-bar-fill{height:100%;border-radius:4px;transition:width .5s}
+.kpi-section{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;padding:14px 14px 8px;display:flex;align-items:center;gap:7px}
+.kpi-section::after{content:'';flex:1;height:1px;background:var(--b)}
+.attention-list{padding:0 14px;display:flex;flex-direction:column;gap:6px}
+.attention-item{background:var(--card);border:1px solid var(--b);border-radius:var(--r2);padding:10px 12px;display:flex;align-items:center;gap:10px}
+.attention-sev{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.attention-body{flex:1;min-width:0}
+.attention-name{font-size:13px;font-weight:500}
+.attention-why{font-size:11px;color:var(--t2);margin-top:2px}
+
+/* PM Calendar */
+.pm-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:8px}
+.pm-month{text-align:center;padding:5px 2px;border-radius:6px;font-size:10px;font-weight:600;border:1px solid var(--b)}
+.pm-done{background:rgba(16,185,129,.12);color:var(--ok);border-color:rgba(16,185,129,.25)}
+.pm-due{background:rgba(239,68,68,.12);color:var(--er);border-color:rgba(239,68,68,.25);animation:p 2s infinite}
+.pm-plan{background:rgba(59,130,246,.08);color:var(--a2);border-color:rgba(59,130,246,.2)}
+.pm-skip{background:var(--card2);color:var(--t3);border-color:var(--b)}
+
+@media(max-width:699px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+}
 
 /* ── REPAIR ORDER SYSTEM ── */
 .ro-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}
@@ -35,7 +442,7 @@
 .ro-inprocess{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.2)}
 
 /* Repair Dashboard Tab */
-.view-tab-bar{position:fixed;left:0;right:0;z-index:198;display:flex;gap:0;align-items:stretch;background:var(--surf);border-bottom:2px solid var(--b);padding:0 14px;top:calc(var(--nh) + var(--sh));height:var(--th)}
+.view-tab-bar{position:fixed;left:0;right:0;z-index:198;display:flex;gap:0;align-items:stretch;background:var(--surf);border-bottom:2px solid var(--b);padding:0 14px;top:calc(var(--nh) + var(--sbh));height:var(--tbh)}
 .vtb{padding:0 16px;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;border:none;background:none;font-family:inherit;transition:all .15s;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:6px;height:100%}
 .vtb.on{color:var(--a);border-bottom-color:var(--a)}
 .vtb:hover{color:var(--t1)}
@@ -102,7 +509,7 @@ body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;background:var(
 .nicn:hover{color:var(--t1)}
 
 /* SYNC BAR */
-#syncbar{position:fixed;top:var(--nh);left:0;right:0;z-index:199;padding:0 14px;background:var(--surf);border-bottom:1px solid var(--b);font-size:11px;color:var(--t3);display:flex;gap:10px;align-items:center;height:var(--sh)}
+#syncbar{position:fixed;top:var(--nh);left:0;right:0;z-index:199;padding:0 14px;background:var(--surf);border-bottom:1px solid var(--b);font-size:11px;color:var(--t3);display:flex;gap:10px;align-items:center;height:var(--sbh)}
 .sdot{width:8px;height:8px;border-radius:50%;background:var(--of);flex-shrink:0;transition:background .3s}
 .sdot.ok{background:var(--ok);box-shadow:0 0 0 3px rgba(16,185,129,.2)}
 .sdot.syncing{background:var(--aw);animation:p 1s infinite}
@@ -145,7 +552,7 @@ td{padding:9px 11px}
 .tn{font-weight:500}
 #cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
 .mc{background:var(--card);border:1px solid var(--b);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .15s}
-.mc:hover{border-color:var(--b2);transform:translateY(-2px);box-shadow:var(--sh)}
+.mc:hover{border-color:var(--b2);transform:translateY(-2px);box-shadow:var(--shadow)}
 .mcp{height:130px;background:var(--card2);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
 .mcp img{width:100%;height:100%;object-fit:cover}
 .mc-sb{height:3px}
@@ -187,7 +594,7 @@ td{padding:9px 11px}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .ov.on{display:flex}
 @media(min-width:700px){.ov{align-items:center;padding:20px}}
-.md{background:var(--surf);border:1px solid var(--b);border-radius:20px 20px 0 0;width:100%;max-height:93vh;overflow-y:auto;box-shadow:var(--sh);animation:slu .22s ease}
+.md{background:var(--surf);border:1px solid var(--b);border-radius:20px 20px 0 0;width:100%;max-height:93vh;overflow-y:auto;box-shadow:var(--shadow);animation:slu .22s ease}
 @media(min-width:700px){.md{border-radius:var(--r);max-width:600px;max-height:90vh;animation:sci .2s ease}}
 @keyframes slu{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
 @keyframes sci{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
@@ -262,7 +669,7 @@ label{font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.3px;text-tr
 #menuov{position:fixed;inset:0;z-index:250;display:none}
 #menuov.on{display:block}
 .menubd{position:absolute;inset:0;background:rgba(0,0,0,.45)}
-.menus{position:absolute;bottom:0;left:0;right:0;background:var(--surf);border-radius:20px 20px 0 0;border-top:1px solid var(--b);padding:10px 18px calc(18px + var(--sab));box-shadow:var(--sh);animation:slu .2s ease}
+.menus{position:absolute;bottom:0;left:0;right:0;background:var(--surf);border-radius:20px 20px 0 0;border-top:1px solid var(--b);padding:10px 18px calc(18px + var(--sab));box-shadow:var(--shadow);animation:slu .2s ease}
 .menu-hdl{width:38px;height:4px;background:var(--b2);border-radius:2px;margin:0 auto 14px}
 .menu-ttl{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 .mi{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--b);cursor:pointer;color:var(--t1);font-size:14px}
@@ -273,14 +680,14 @@ label{font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.3px;text-tr
 .mi-sub{font-size:12px;color:var(--t2);margin-top:1px}
 
 /* TOAST */
-.toast{position:fixed;z-index:500;left:50%;transform:translateX(-50%) translateY(16px);bottom:calc(var(--bnh) + var(--sab) + 10px);background:var(--card2);border:1px solid var(--b2);border-radius:11px;padding:10px 18px;font-size:13px;color:var(--t1);box-shadow:var(--sh);opacity:0;transition:all .3s ease;pointer-events:none;max-width:calc(100vw - 28px);text-align:center}
+.toast{position:fixed;z-index:500;left:50%;transform:translateX(-50%) translateY(16px);bottom:calc(var(--bnh) + var(--sab) + 10px);background:var(--card2);border:1px solid var(--b2);border-radius:11px;padding:10px 18px;font-size:13px;color:var(--t1);box-shadow:var(--shadow);opacity:0;transition:all .3s ease;pointer-events:none;max-width:calc(100vw - 28px);text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 @media(min-width:700px){.toast{bottom:22px}}
 
 /* CONFIRM */
 .conf-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
 .conf-ov.on{display:flex}
-.conf-box{background:var(--surf);border:1px solid var(--b);border-radius:var(--r);padding:26px 22px;max-width:340px;width:100%;text-align:center;box-shadow:var(--sh);animation:sci .2s}
+.conf-box{background:var(--surf);border:1px solid var(--b);border-radius:var(--r);padding:26px 22px;max-width:340px;width:100%;text-align:center;box-shadow:var(--shadow);animation:sci .2s}
 .conf-ac{display:flex;gap:9px;margin-top:16px}
 .conf-ac button{flex:1;padding:11px;border-radius:var(--r2);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none}
 
@@ -295,6 +702,8 @@ label{font-size:11px;font-weight:600;color:var(--t2);letter-spacing:.3px;text-tr
 .pfl{height:100%;background:var(--a);border-radius:4px;transition:width .5s}
 
 @media(max-width:699px){
+  .tab-lbl{display:none} /* ซ่อนข้อความ tab บน mobile ให้เหลือแค่ icon */
+  .vtb{padding:0 10px;font-size:16px}
   #bnn{display:flex}
   #main{padding-bottom:calc(var(--bnh) + var(--sab) + 14px)} /* hh still applies */
   #stats{grid-template-columns:repeat(3,1fr)}
@@ -501,7 +910,7 @@ async function sendLINE(msg){
 // ── FORMAT LINE MESSAGE ──
 function fmtLINEOpen(m){
   return `🔧 แจ้งซ่อมใหม่ — SMC Inspect
-━━━━━━━━━━━━━━━
+--------------
 เครื่อง: ${m.name}
 รหัส: ${m.code} | ตำแหน่ง: ${m.loc}
 เลขที่ใบแจ้งซ่อม: ${m.repairNo}
@@ -510,33 +919,33 @@ function fmtLINEOpen(m){
 หมายเหตุ: ${m.repairNote||'-'}
 ผู้แจ้ง: ${m.inspector||'-'}
 วันที่: ${m.inspectDate||new Date().toLocaleDateString('th-TH')}
-━━━━━━━━━━━━━━━
+--------------
 ⚠️ กรุณาดำเนินการซ่อม`;
 }
 
 function fmtLINEClose(m, oldRepairNo){
   return `✅ ปิดใบแจ้งซ่อม — SMC Inspect
-━━━━━━━━━━━━━━━
+--------------
 เครื่อง: ${m.name}
 รหัส: ${m.code} | ตำแหน่ง: ${m.loc}
 เลขที่ใบแจ้งซ่อม: ${oldRepairNo}
 สถานะใหม่: ปกติ ✓
 ผู้ปิดงาน: ${m.inspector||'-'}
 วันที่: ${m.inspectDate||new Date().toLocaleDateString('th-TH')}
-━━━━━━━━━━━━━━━
+--------------
 ✅ เครื่องกลับมาใช้งานได้แล้ว`;
 }
 
 function fmtLINEStatus(m){
   const ico={ปกติ:'✅',ผิดปกติ:'⚠️',ไม่สามารถทำงานได้:'🔴',ชำรุด:'🔧',ไม่ได้ใช้งานแล้ว:'⭕'}[m.status]||'❓';
   return `${ico} สถานะเครื่องจักรเปลี่ยน — SMC Inspect
-━━━━━━━━━━━━━━━
+--------------
 เครื่อง: ${m.name} (${m.code})
 ตำแหน่ง: ${m.loc}
 สถานะ: ${m.status}
 หมายเหตุ: ${m.statusNote||'-'}
 ผู้ตรวจ: ${m.inspector||'-'}
-━━━━━━━━━━━━━━━`;
+--------------`;
 }
 
 // ── STATE ──
@@ -675,8 +1084,19 @@ function clearViews(){document.getElementById('tb').innerHTML='';document.getEle
 function rTable(L){
   document.getElementById('tb').innerHTML=L.map(m=>{
     const idx=MS.indexOf(m);const note=(m.statusNote||'').substring(0,22);
-    const repair=m.repairNo?`<span class="repair-tag">🔧 ${m.repairNo}</span>`:'';
-    return`<tr onclick="openEd(${idx})"><td class="tm">${m.seq}</td><td style="width:38px">${thumbEl(m.photos)}</td><td class="tc">${m.code}</td><td class="tn">${m.name}</td><td>${gbadge(m.grp)}</td><td style="font-size:12px;color:var(--t2)">${m.loc}</td><td>${sbadge(m.status)}</td><td style="font-size:12px">${repair}${note}</td><td class="tm">${m.inspectDate||''}</td><td style="font-size:12px;color:var(--t2)">${m.inspector||''}</td></tr>`;
+    const repair=m.repairNo?'<span class="repair-tag">🔧 '+m.repairNo+'</span>':'';
+    return'<tr onclick="openEd('+idx+')">'
+      +'<td class="tm">'+m.seq+'</td>'
+      +'<td style="width:38px">'+thumbEl(m.photos)+'</td>'
+      +'<td class="tc">'+m.code+'</td>'
+      +'<td class="tn">'+m.name+'</td>'
+      +'<td>'+gbadge(m.grp)+'</td>'
+      +'<td style="font-size:12px;color:var(--t2)">'+m.loc+'</td>'
+      +'<td>'+sbadge(m.status)+'</td>'
+      +'<td style="font-size:12px">'+repair+note+'</td>'
+      +'<td class="tm">'+(m.inspectDate||'')+'</td>'
+      +'<td style="font-size:12px;color:var(--t2)">'+(m.inspector||'')+'</td>'
+      +'</tr>';
   }).join('');
 }
 
@@ -685,7 +1105,14 @@ function rCards(L){
   L.forEach(m=>{
     const idx=MS.indexOf(m);const sc=scol(m.status);const hasP=m.photos&&m.photos.length>0;
     const div=document.createElement('div');div.className='mc';div.onclick=()=>openEd(idx);
-    div.innerHTML=`<div class="mcp">${hasP?`<img src="${m.photos[0]}" alt="" style="width:100%;height:100%;object-fit:cover" loading="lazy">`:'<div style="font-size:36px;color:var(--t3)">⚙</div>'}${m.repairNo?`<span class="mc-repair">🔧 ${m.repairNo}</span>`:''}<div style="position:absolute;top:7px;left:7px">${gbadge(m.grp)}</div></div><div class="mc-sb" style="background:${sc}"></div><div class="mcb"><div class="mc-code">${m.code}</div><div class="mc-name">${m.name}</div><div class="mc-loc">📍 ${m.loc}</div></div><div class="mcf">${sbadge(m.status)}<span style="font-size:11px;color:var(--t3)">${m.inspector?'👤 '+m.inspector:''}</span></div>`;
+    const photoHtml = hasP
+      ? '<img src="'+m.photos[0]+'" alt="" style="width:100%;height:100%;object-fit:cover" loading="lazy">'
+      : '<div style="font-size:36px;color:var(--t3)">⚙</div>';
+    const repairHtml = m.repairNo ? '<span class="mc-repair">🔧 '+m.repairNo+'</span>' : '';
+    div.innerHTML='<div class="mcp">'+photoHtml+repairHtml+'<div style="position:absolute;top:7px;left:7px">'+gbadge(m.grp)+'</div></div>'
+      +'<div class="mc-sb" style="background:'+sc+'"></div>'
+      +'<div class="mcb"><div class="mc-code">'+m.code+'</div><div class="mc-name">'+m.name+'</div><div class="mc-loc">📍 '+m.loc+'</div></div>'
+      +'<div class="mcf">'+sbadge(m.status)+'<span style="font-size:11px;color:var(--t3)">'+(m.inspector?'👤 '+m.inspector:'')+'</span></div>';
     grid.appendChild(div);
   });
 }
@@ -696,8 +1123,8 @@ function rCompact(L){
     const idx=MS.indexOf(m);
     if(m.loc!==lLoc){const d=document.createElement('div');d.className='shdr';d.textContent='📍 '+(m.loc||'—');cl.appendChild(d);lLoc=m.loc;}
     const row=document.createElement('div');row.className='cr';row.onclick=()=>openEd(idx);
-    const repair=m.repairNo?`<span class="repair-tag">🔧 ${m.repairNo}</span>`:'';
-    row.innerHTML=`<div class="cr-l"><span class="cr-n">${m.seq}</span>${thumbEl(m.photos,30)}<span class="cr-nm">${m.name}</span></div><div class="cr-r">${repair}${gbadge(m.grp)}${sbadge(m.status)}</div>`;
+    const repair=m.repairNo?'<span class="repair-tag">🔧 '+m.repairNo+'</span>':'';
+    row.innerHTML=`<div class="cr-l"><span class="cr-n">${m.seq}</span>${thumbEl(m.photos,30)}<span class="cr-nm">${m.name}</span></div><div class="cr-r">${repair2}${gbadge(m.grp)}${sbadge(m.status)}</div>`;
     cl.appendChild(row);
   });
 }
@@ -737,10 +1164,17 @@ async function openEd(idx){
   if(!hist.length){document.getElementById('hlist').innerHTML='<div class="hempty">📭 ยังไม่มีประวัติ</div>';}
   else{document.getElementById('hlist').innerHTML=hist.map((h,i)=>{
     const sc=scol(h.status);const isLast=i===hist.length-1;
-    const phs=(h.photos||[]).map(p=>`<img class="hpth" src="${p}" onclick="openLB(this.src)">`).join('');
-    const rNo=h.repairNo?`<span class="repair-tag">🔧 ${h.repairNo}</span>`:'';
-    return`<div class="hi"><div class="hln"><div class="hdot" style="background:${sc};border-color:var(--surf)"></div>${!isLast?'<div class="hline"></div>':''}</div><div class="hbd"><div class="hhd">${sbadge(h.status)}${rNo}<span class="hdt">${h.inspectDate||h.savedAt?.split('T')[0]||''}</span>${h.inspector?`<span class="hin">👤 ${h.inspector}</span>`:''}</div>${h.statusNote?`<div class="hn">${h.statusNote}</div>`:''} ${h.repairNote?`<div class="hn" style="color:var(--a2);font-size:12px">📋 ${h.repairNote}</div>`:''} ${phs?`<div class="hphs">${phs}</div>`:''}</div></div>`;
+    const phs=(h.photos||[]).map(p=>'<img class="hpth" src="'+p+'" onclick="openLB(this.src)">').join('');
+    const rNo2=h.repairNo?'<span class="repair-tag">🔧 '+h.repairNo+'</span>':'';
+    const inspH=h.inspector?'<span class="hin">👤 '+h.inspector+'</span>':'';
+    const noteH=h.statusNote?'<div class="hn">'+h.statusNote+'</div>':'';
+    const rnoteH=h.repairNote?'<div class="hn" style="color:var(--a2);font-size:12px">📋 '+h.repairNote+'</div>':'';
+    const phsH=phs?'<div class="hphs">'+phs+'</div>':'';
+    const lineH=!isLast?'<div class="hline"></div>':'';
+    return'<div class="hi"><div class="hln"><div class="hdot" style="background:'+sc+';border-color:var(--surf)"></div>'+lineH+'</div><div class="hbd"><div class="hhd">'+sbadge(h.status)+rNo2+'<span class="hdt">'+(h.inspectDate||h.savedAt?.split('T')[0]||'')+'</span>'+inspH+'</div>'+noteH+rnoteH+phsH+'</div></div>';
   }).join('');}
+  // Render PM Calendar
+  renderPMCalendar(m.code);
   ov('eov',true);
 }
 window.openEd=openEd;
@@ -842,7 +1276,9 @@ async function openAllHist(){
   document.getElementById('ah-sub').textContent='ทั้งหมด '+all.length+' รายการ · Firebase';
   document.getElementById('ahlist').innerHTML=all.length===0?'<div class="hempty">📭 ยังไม่มีประวัติ</div>':all.map(h=>{
     const sc=scol(h.status);const rNo=h.repairNo?`<span class="repair-tag">🔧 ${h.repairNo}</span>`:'';
-    return`<div class="hi"><div class="hln"><div class="hdot" style="background:${sc}"></div></div><div class="hbd"><div class="hhd"><strong style="font-size:13px">${h.machineName||h.code}</strong>${sbadge(h.status)}${rNo}<span class="hdt">${h.inspectDate||h.savedAt?.split('T')[0]||''}</span>${h.inspector?`<span class="hin">👤 ${h.inspector}</span>`:''}</div>${h.statusNote?`<div class="hn">${h.statusNote}</div>`:''}</div></div>`;
+    // openAllHist row - converted from template
+    const d2=h.inspectDate||h.savedAt?.split('T')[0]||'';
+    return'<div class="hi"><div class="hln"><div class="hdot" style="background:'+sc+'"></div></div><div class="hbd"><div class="hhd"><strong style="font-size:13px">'+(h.machineName||h.code)+'</strong>'+sbadge(h.status)+rNo+'<span class="hdt">'+d2+'</span>'+inspHtml+'</div>'+noteHtml+'</div></div>';
   }).join('');
   ov('ahov',true);
 }
@@ -1127,29 +1563,30 @@ function updateRepairCounts(){
 // Switch View Tab
 function switchViewTab(tab){
   currentViewTab = tab;
-  ['machine','repair'].forEach(t=>{
-    document.getElementById('vtb-'+t)?.classList.toggle('on', t===tab);
+  // อัปเดต active tab
+  ['machine','check','repair','kpi'].forEach(t=>{
+    document.getElementById('vtb-'+t)?.classList.toggle('on',t===tab);
   });
-  const machineArea = document.getElementById('stats');
-  const fbar = document.getElementById('fbar');
-  const vcont = document.getElementById('vcont');
-  const repairView = document.getElementById('repairView');
-
-  if(tab === 'machine'){
-    machineArea.style.display = '';
-    fbar.style.display = '';
-    vcont.style.display = '';
-    repairView.style.display = 'none';
-    render();
-  } else {
-    machineArea.style.display = 'none';
-    fbar.style.display = 'none';
-    vcont.style.display = 'none';
-    repairView.style.display = 'block';
-    renderRepairView();
-  }
+  // ซ่อน/แสดง views
+  const machineArea=document.getElementById('stats');
+  const fbar=document.getElementById('fbar');
+  const vcont=document.getElementById('vcont');
+  const repairView=document.getElementById('repairView');
+  const checkView=document.getElementById('checkView');
+  const kpiView=document.getElementById('kpiView');
+  const isMachine=tab==='machine';
+  machineArea.style.display=isMachine?'':'none';
+  fbar.style.display=isMachine?'':'none';
+  vcont.style.display=isMachine?'':'none';
+  repairView.style.display=tab==='repair'?'block':'none';
+  checkView.style.display=tab==='check'?'block':'none';
+  kpiView.style.display=tab==='kpi'?'block':'none';
+  if(isMachine) render();
+  else if(tab==='repair') renderRepairView();
+  else if(tab==='check') initDCL();
+  else if(tab==='kpi') renderKPI();
 }
-window.switchViewTab = switchViewTab;
+window.switchViewTab=switchViewTab;
 
 // Render Repair Dashboard
 function renderRepairView(){
@@ -1200,27 +1637,29 @@ function renderRepairView(){
     const mLink = r.machineCode ? MS.find(m=>m.code===r.machineCode) : null;
     const isActive = r.isOpen && r.prStatus !== 'Completed';
 
-    return `<div class="ro-card ${isActive?'active':r.prStatus==='Completed'?'done':''}">
-      <div class="ro-hd">
-        <span class="ro-no">${r.reqservNo||'—'}</span>
-        <span class="ro-pr">${r.prNo||''}</span>
-        <span class="ro-badge ${sCls}">${sLbl}</span>
-        ${isActive?'<span style="font-size:10px;color:var(--er);font-weight:700;animation:p 1.5s infinite">● ค้างอยู่</span>':''}
-      </div>
-      ${r.machineCode?`<div style="font-size:12px;color:var(--a2);margin-bottom:4px">⚙ ${r.machineCode} — ${r.machineName||''}</div>`:'<div style="font-size:12px;color:var(--t3);margin-bottom:4px">⚙ ยังไม่ได้ผูกกับเครื่องจักร</div>'}
-      <div class="ro-body">${r.detail||'—'}</div>
-      <div class="ro-meta">
-        ${r.repairDate?`<span class="ro-meta-item">📅 แจ้ง ${r.repairDate}</span>`:''}
-        ${r.amt?`<span class="ro-meta-item">💰 ${Number(r.amt).toLocaleString()} บาท</span>`:''}
-        ${r.prStatus2?`<span class="ro-meta-item">📋 ${r.prStatus2}</span>`:''}
-        ${r.closedDate?`<span class="ro-meta-item">✅ ปิด ${r.closedDate}</span>`:''}
-      </div>
-      <div class="ro-actions">
-        ${isActive?`<button class="ro-btn ro-btn-close" onclick="closeRepairOrder('${r.id}')">✅ ปิดใบแจ้งซ่อม</button>`:''}
-        ${r.machineCode?`<button class="ro-btn" style="background:rgba(59,130,246,.1);color:var(--a2);border:1px solid rgba(59,130,246,.2)" onclick="openEdByCode('${r.machineCode}')">⚙ ดูเครื่องจักร</button>`:`<button class="ro-btn" style="background:rgba(139,92,246,.1);color:#c4b5fd;border:1px solid rgba(139,92,246,.2)" onclick="linkRepairToMachine('${r.id}')">🔗 ผูกเครื่องจักร</button>`}
-        <button class="ro-btn ro-btn-del" onclick="deleteRepairOrder('${r.id}')">🗑</button>
-      </div>
-    </div>`;
+    const mcHtml = r.machineCode
+      ? '<div style="font-size:12px;color:var(--a2);margin-bottom:4px">⚙ '+r.machineCode+' — '+(r.machineName||'')+'</div>'
+      : '<div style="font-size:12px;color:var(--t3);margin-bottom:4px">⚙ ยังไม่ได้ผูกกับเครื่องจักร</div>';
+    const metaHtml = (r.repairDate?'<span class="ro-meta-item">📅 แจ้ง '+r.repairDate+'</span>':'')
+      + (r.amt?'<span class="ro-meta-item">💰 '+Number(r.amt).toLocaleString()+' บาท</span>':'')
+      + (r.prStatus2?'<span class="ro-meta-item">📋 '+r.prStatus2+'</span>':'')
+      + (r.closedDate?'<span class="ro-meta-item">✅ ปิด '+r.closedDate+'</span>':'');
+    const safeId = String(r.id||'').replace(/'/g,"\'");
+    const safeMC = String(r.machineCode||'').replace(/'/g,"\'");
+    const actHtml = (isActive?'<button class="ro-btn ro-btn-close" onclick="closeRepairOrder(\'' +safeId+ '\')">✅ ปิดใบแจ้งซ่อม</button>':'')
+      + (r.machineCode
+        ? '<button class="ro-btn" style="background:rgba(59,130,246,.1);color:var(--a2);border:1px solid rgba(59,130,246,.2)" onclick="openEdByCode(\'' +safeMC+ '\')">⚙ ดูเครื่องจักร</button>'
+        : '<button class="ro-btn" style="background:rgba(139,92,246,.1);color:#c4b5fd;border:1px solid rgba(139,92,246,.2)" onclick="linkRepairToMachine(\'' +safeId+ '\')">🔗 ผูกเครื่องจักร</button>')
+      + '<button class="ro-btn ro-btn-del" onclick="deleteRepairOrder(\'' +safeId+ '\')">🗑</button>';
+    const activeClass = isActive?'active':r.prStatus==='Completed'?'done':'';
+    const pendingBadge = isActive?'<span style="font-size:10px;color:var(--er);font-weight:700;animation:p 1.5s infinite">● ค้างอยู่</span>':'';
+    return '<div class="ro-card '+activeClass+'">'
+      +'<div class="ro-hd"><span class="ro-no">'+(r.reqservNo||'—')+'</span><span class="ro-pr">'+(r.prNo||'')+'</span><span class="ro-badge '+sCls+'">'+sLbl+'</span>'+pendingBadge+'</div>'
+      +mcHtml
+      +'<div class="ro-body">'+(r.detail||'—')+'</div>'
+      +'<div class="ro-meta">'+metaHtml+'</div>'
+      +'<div class="ro-actions">'+actHtml+'</div>'
+      +'</div>';
   }).join('');
 }
 window.renderRepairView = renderRepairView;
@@ -1282,10 +1721,7 @@ window.deleteRepairOrder = deleteRepairOrder;
 function linkRepairToMachine(id){
   const ro = REPAIR_ORDERS.find(r=>r.id===id);
   if(!ro) return;
-  const code = prompt(`ใส่รหัสเครื่องจักรที่ต้องการผูก:
-(เช่น BM01, CS02)
-ใบแจ้งซ่อม: ${ro.reqservNo}
-รายละเอียด: ${ro.detail||''}`);
+  const code = prompt('ใส่รหัสเครื่องจักรที่ต้องการผูก (เช่น BM01, CS02)\nใบแจ้งซ่อม: '+ro.reqservNo+'\nรายละเอียด: '+(ro.detail||''));
   if(!code) return;
   const m = MS.find(x=>x.code.toUpperCase()===code.toUpperCase());
   if(!m){toast('⚠ ไม่พบรหัส '+code);return;}
@@ -1442,6 +1878,15 @@ async function confirmPRImport(){
 }
 window.confirmPRImport=confirmPRImport;
 
+function setCF(m){
+  cfmode=m;
+  ['merge','keep','replace'].forEach(n=>{
+    const el=document.getElementById('cf-'+n);
+    if(el) el.classList.toggle('on',m===n);
+  });
+}
+window.setCF=setCF;
+
 // ── LINE SETTINGS ──
 function openLineSettings(){
   // โหลดค่าที่บันทึกไว้
@@ -1506,7 +1951,440 @@ async function init(){
     };
   }catch(e){}
   setV('c');
+  // render เรียกผ่าน setV แล้ว แต่เพิ่ม safety render
+  setTimeout(()=>{ if(typeof render==='function') render(); },500);
 }
+// ══════════════════════════════════════════════════════════
+// DAILY CHECKLIST SYSTEM v9.2 — Compact | Fast | No Whitespace
+// ══════════════════════════════════════════════════════════
+let dclState    = {};   // code → {status:'ok'|'wn'|'er'}
+let dclDate     = '';
+let dclSubmitted= false;
+let dclFilter   = 'all';
+let dclSearch   = '';
+let dclDebounce = null;
+
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function todayTH(){
+  const d = new Date();
+  return d.toLocaleDateString('th-TH',{weekday:'short',month:'short',day:'numeric',year:'2-digit'});
+}
+
+// ── INIT ─────────────────────────────────────────────────
+function initDCL(){
+  dclDate = todayStr();
+  const insp = localStorage.getItem('smc_inspector')||'';
+  const iEl = document.getElementById('dcl-inspector');
+  if(iEl) iEl.value = insp;
+  const dEl = document.getElementById('dcl-date');
+  if(dEl) dEl.textContent = '📅 '+todayTH();
+  // Reset filters
+  dclFilter='all'; dclSearch='';
+  const si = document.getElementById('dcl-search-input');
+  if(si) si.value='';
+  ['all','none','ok','warn','err'].forEach(f=>{
+    const el=document.getElementById('dcl-f-'+f);
+    if(el) el.classList.toggle('on',f==='all');
+  });
+  // Check submitted
+  checkTodaySubmitted();
+  renderDCL();
+}
+
+// ── SUBMITTED CHECK ──────────────────────────────────────
+async function checkTodaySubmitted(){
+  try{
+    const snap=await getDocs(query(collection(fdb,'daily_checks'),orderBy('date','desc')));
+    let found=false;
+    snap.forEach(d=>{ if(d.data().date===todayStr()) found=true; });
+    dclSubmitted=found;
+    const b=document.getElementById('dcl-done-banner');
+    if(b) b.classList.toggle('show',found);
+    updateDCLSubmitBtn();
+  }catch(e){ console.warn('checkDCL:',e); }
+}
+
+// ── FILTER CONTROLS ──────────────────────────────────────
+function dclSetFilter(f){
+  dclFilter=f;
+  ['all','none','ok','warn','err'].forEach(k=>{
+    const el=document.getElementById('dcl-f-'+k);
+    if(el) el.classList.toggle('on',k===f);
+  });
+  renderDCL();
+}
+function dclFilterSearch(){
+  clearTimeout(dclDebounce);
+  const si=document.getElementById('dcl-search-input');
+  dclSearch=si?si.value.toLowerCase():'';
+  dclDebounce=setTimeout(renderDCL,200);
+}
+window.dclSetFilter=dclSetFilter;
+window.dclFilterSearch=dclFilterSearch;
+
+// ── FILTERED LIST ────────────────────────────────────────
+function getDCLList(){
+  return MS.filter(m=>{
+    if(dclSearch&&!m.name.toLowerCase().includes(dclSearch)
+      &&!m.code.toLowerCase().includes(dclSearch)
+      &&!m.loc.toLowerCase().includes(dclSearch)) return false;
+    const st=dclState[m.code];
+    if(dclFilter==='none'&&st) return false;
+    if(dclFilter==='ok'  &&st?.status!=='ok')  return false;
+    if(dclFilter==='warn'&&st?.status!=='wn')  return false;
+    if(dclFilter==='err' &&st?.status!=='er')  return false;
+    return true;
+  });
+}
+
+// ── RENDER ───────────────────────────────────────────────
+function renderDCL(){
+  const container=document.getElementById('dclContent');
+  if(!container) return;
+  const list=getDCLList();
+  if(!list.length){
+    container.innerHTML='<div class="dcl-empty"><div class="dcl-empty-ico">🔍</div>'
+      +'<div style="font-size:14px;font-weight:600;color:var(--t2)">ไม่พบรายการ</div>'
+      +'<div style="font-size:12px;margin-top:4px;color:var(--t3)">ลองเปลี่ยนตัวกรอง</div></div>';
+    updateDCLProgress();
+    return;
+  }
+  // Group by location
+  const groups={};
+  list.forEach(m=>{ (groups[m.loc]||(groups[m.loc]=[])).push(m); });
+  const frag=document.createDocumentFragment();
+  Object.keys(groups).sort().forEach(loc=>{
+    const items=groups[loc];
+    const doneInLoc=items.filter(m=>dclState[m.code]).length;
+    // Section header
+    const sec=document.createElement('div');
+    sec.className='dcl-section';
+    sec.innerHTML='📍 '+loc+'<span class="dcl-sec-cnt">'+doneInLoc+'/'+items.length+'</span>';
+    frag.appendChild(sec);
+    items.forEach(m=>frag.appendChild(buildDCLItem(m)));
+  });
+  container.innerHTML='';
+  container.appendChild(frag);
+  updateDCLProgress();
+}
+
+// ── BUILD ITEM ───────────────────────────────────────────
+function buildDCLItem(m){
+  const st=dclState[m.code];
+  const cls=st?(st.status==='ok'?'checked':st.status==='wn'?'warn':'err'):'';
+  const grpC=m.grp==='A'?'#f87171':m.grp==='B'?'#93c5fd':'#6ee7b7';
+  const grpB=m.grp==='A'?'rgba(239,68,68,.12)':m.grp==='B'?'rgba(59,130,246,.12)':'rgba(16,185,129,.12)';
+  const aOk=st&&st.status==='ok'?'aok':'';
+  const aWn=st&&st.status==='wn'?'awn':'';
+  const aEr=st&&st.status==='er'?'aer':'';
+  const meta=(m.inspector?'👤 '+m.inspector.substring(0,10):'')+(m.inspectDate?' · '+m.inspectDate:'');
+  const isCrit=m.grp==='A';
+  const mIdx=MS.indexOf(m);
+  const div=document.createElement('div');
+  div.className='dcl-item '+cls;
+  div.id='dcl-row-'+m.code;
+  // Build innerHTML with string concat — no nested backticks
+  div.innerHTML=
+    '<div class="dcl-body">'
+      +'<div class="dcl-name-row">'
+        +'<span class="dcl-code">'+m.code+'</span>'
+        +'<span class="dcl-grp" style="background:'+grpB+';color:'+grpC+'">'+m.grp+'</span>'
+        +(isCrit?'<span class="dcl-crit">⚡</span>':'')
+        +'<span class="dcl-name">'+m.name+'</span>'
+      +'</div>'
+      +(meta?'<div class="dcl-meta">'+meta+'</div>':'')
+    +'</div>'
+    +'<div class="dcl-btns">'
+      +'<button class="dcl-btn '+aOk+'" data-code="'+m.code+'" data-st="ok"'
+        +' onclick="setDCL(this.dataset.code,this.dataset.st,this)" title="ปกติ">✅</button>'
+      +'<button class="dcl-btn '+aWn+'" data-code="'+m.code+'" data-st="wn"'
+        +' onclick="setDCL(this.dataset.code,this.dataset.st,this)" title="ผิดปกติ">⚠️</button>'
+      +'<button class="dcl-btn '+aEr+'" data-code="'+m.code+'" data-st="er"'
+        +' onclick="setDCL(this.dataset.code,this.dataset.st,this)" title="หยุด">🔴</button>'
+      +'<button class="dcl-btn-more" onclick="openEd('+mIdx+')" title="รายละเอียด">⋯</button>'
+    +'</div>';
+  return div;
+}
+
+// ── SET STATUS ───────────────────────────────────────────
+function setDCL(code,status,btnEl){
+  if(dclSubmitted){ toast('⚠ ส่งรายงานวันนี้แล้ว'); return; }
+  // Toggle: same = unset
+  if(dclState[code]&&dclState[code].status===status){
+    delete dclState[code];
+  } else {
+    dclState[code]={status};
+  }
+  updateDCLRow(code);
+  if(btnEl){ btnEl.classList.add('just-set'); setTimeout(()=>btnEl.classList.remove('just-set'),280); }
+  // Sync to MS array
+  const m=MS.find(x=>x.code===code);
+  if(m){
+    const sm={ok:'ปกติ',wn:'ผิดปกติ',er:'ไม่สามารถทำงานได้'};
+    m.status=dclState[code]?sm[dclState[code].status]:'';
+    m.inspectDate=dclDate;
+    m.inspector=document.getElementById('dcl-inspector')?.value||'Daily Check';
+  }
+  updateDCLProgress();
+}
+
+// ── UPDATE ROW DOM (no re-render) ────────────────────────
+function updateDCLRow(code){
+  const row=document.getElementById('dcl-row-'+code);
+  if(!row) return;
+  const st=dclState[code];
+  row.className='dcl-item '+(st?(st.status==='ok'?'checked':st.status==='wn'?'warn':'err'):'');
+  const btns=row.querySelectorAll('.dcl-btn');
+  const map=['ok','wn','er'];
+  const cls=['aok','awn','aer'];
+  btns.forEach((b,i)=>{
+    b.className='dcl-btn '+(st&&st.status===map[i]?cls[i]:'');
+  });
+}
+
+// ── PROGRESS ─────────────────────────────────────────────
+function updateDCLProgress(){
+  const total=MS.length;
+  const vals=Object.values(dclState);
+  const done=vals.length;
+  const ok=vals.filter(s=>s.status==='ok').length;
+  const wn=vals.filter(s=>s.status==='wn').length;
+  const er=vals.filter(s=>s.status==='er').length;
+  const left=total-done;
+  const pct=total>0?Math.round(done/total*100):0;
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('dkp-total',total); set('dkp-done',done);
+  set('dkp-warn',wn); set('dkp-err',er); set('dkp-left',left);
+  set('dcl-prog-pct',pct+'%');
+  const fill=document.getElementById('dcl-prog-fill');
+  if(fill){
+    fill.style.width=pct+'%';
+    fill.style.background=pct>=90?'var(--ag)':pct>=50?'var(--a)':'var(--aw)';
+  }
+  const tc=document.getElementById('vtb-check-cnt');
+  if(tc) tc.textContent=done>0?done:'';
+  updateDCLSubmitBtn();
+}
+function updateDCLSubmitBtn(){
+  const btn=document.getElementById('dcl-submit-btn');
+  if(!btn) return;
+  const done=Object.keys(dclState).length;
+  btn.disabled=dclSubmitted||done<Math.floor(MS.length*0.9);
+}
+
+// ── LEGACY filterDCL ─────────────────────────────────────
+function filterDCL(){
+  const loc=prompt('กรอกห้องที่ต้องการกรอง หรือว่างเพื่อดูทั้งหมด');
+  if(loc===null) return;
+  document.querySelectorAll('.dcl-item').forEach(el=>{
+    if(!loc){ el.style.display='flex'; return; }
+    const code=el.id.replace('dcl-row-','');
+    const m=MS.find(x=>x.code===code);
+    el.style.display=(m&&m.loc.includes(loc))?'flex':'none';
+  });
+}
+
+// ── SUBMIT ───────────────────────────────────────────────
+async function submitDailyCheck(){
+  if(dclSubmitted){ toast('⚠ ส่งรายงานวันนี้แล้ว'); return; }
+  const inspector=document.getElementById('dcl-inspector')?.value.trim()||'';
+  if(!inspector){ toast('⚠ กรุณาใส่ชื่อผู้ตรวจ'); document.getElementById('dcl-inspector')?.focus(); return; }
+  const done=Object.keys(dclState).length;
+  if(done<Math.floor(MS.length*0.9)){ toast('⚠ ต้องตรวจ 90%+ ('+Math.floor(MS.length*0.9)+' เครื่อง)'); return; }
+  toast('⏳ กำลังส่งรายงาน...');
+  try{
+    const vals=Object.values(dclState);
+    const okC=vals.filter(s=>s.status==='ok').length;
+    const wnC=vals.filter(s=>s.status==='wn').length;
+    const erC=vals.filter(s=>s.status==='er').length;
+    await setDoc(doc(fdb,'daily_checks',dclDate),{
+      date:dclDate,inspector,total:MS.length,checked:done,
+      ok:okC,warn:wnC,err:erC,details:dclState,submittedAt:serverTimestamp()
+    });
+    const batch=writeBatch(fdb);
+    const sm={ok:'ปกติ',wn:'ผิดปกติ',er:'ไม่สามารถทำงานได้'};
+    Object.entries(dclState).forEach(([code,st])=>{
+      const m=MS.find(x=>x.code===code);
+      if(m){
+        m.status=sm[st.status]||''; m.inspectDate=dclDate; m.inspector=inspector;
+        batch.set(doc(fdb,'machines',code),{
+          code,status:m.status,inspector,inspectDate:dclDate,
+          statusNote:m.statusNote||'',repairNo:m.repairNo||'',
+          repairNote:m.repairNote||'',photos:m.photos||[],updatedAt:serverTimestamp()
+        },{merge:true});
+      }
+    });
+    await batch.commit();
+    dclSubmitted=true;
+    const b=document.getElementById('dcl-done-banner');
+    if(b) b.classList.add('show');
+    updateDCLSubmitBtn();
+    render();
+    toast('✅ ส่งแล้ว! '+done+' เครื่อง (✅'+okC+' ⚠️'+wnC+' 🔴'+erC+')');
+    setTimeout(()=>switchViewTab('kpi'),1500);
+  }catch(e){ toast('✗ '+e.message); }
+}
+window.setDCL=setDCL;
+window.submitDailyCheck=submitDailyCheck;
+window.filterDCL=filterDCL;
+window.dclSetFilter=dclSetFilter;
+window.dclFilterSearch=dclFilterSearch;
+
+// ══════════════════════════════════════════════════════════
+// KPI EXECUTIVE DASHBOARD
+// ══════════════════════════════════════════════════════════
+async function renderKPI(){
+  // Availability
+  const total=MS.length;
+  const ok=MS.filter(m=>m.status==='ปกติ').length;
+  const down=MS.filter(m=>m.status==='ไม่สามารถทำงานได้'||m.status==='ชำรุด').length;
+  const warn=MS.filter(m=>m.status==='ผิดปกติ').length;
+  const avail=total>0?Math.round(ok/total*100):0;
+  document.getElementById('kpi-avail').textContent=avail+'%';
+  document.getElementById('kpi-avail-sub').textContent=`ปกติ ${ok} จาก ${total} เครื่อง`;
+  document.getElementById('kpi-avail-bar').style.width=avail+'%';
+  document.getElementById('kpi-avail-bar').style.background=avail>=90?'var(--ok)':avail>=70?'var(--aw)':'var(--er)';
+  document.getElementById('kpi-down').textContent=down;
+  // Daily check
+  let checkedToday=0;
+  try{
+    const dc=await getDocs(query(collection(fdb,'daily_checks'),orderBy('date','desc')));
+    dc.forEach(d=>{if(d.data().date===todayStr()){checkedToday=d.data().checked||0;}});
+  }catch(e){}
+  document.getElementById('kpi-check').textContent=checkedToday||Object.keys(dclState).length;
+  document.getElementById('kpi-check-sub').textContent=`จาก ${total} เครื่อง วันนี้`;
+  // PM Compliance (placeholder)
+  document.getElementById('kpi-pm').textContent='—%';
+  document.getElementById('kpi-pm-sub').textContent='Upload แผน PM เพื่อคำนวณ';
+  // Open repair orders
+  const openRepairs=REPAIR_ORDERS.filter(r=>r.isOpen&&r.prStatus!=='Completed');
+  const rEl=document.getElementById('kpi-repair-list');
+  if(openRepairs.length===0){
+    rEl.innerHTML='<div style="padding:10px;text-align:center;color:var(--t3);font-size:13px">ไม่มีใบแจ้งซ่อมค้าง ✅</div>';
+  }else{
+    rEl.innerHTML=openRepairs.slice(0,5).map(r=>{
+      return'<div class="attention-item">'
+        +'<div class="attention-sev" style="background:var(--er)"></div>'
+        +'<div class="attention-body">'
+        +'<div class="attention-name">'+(r.machineName||r.reqservNo)+'</div>'
+        +'<div class="attention-why">'+r.reqservNo+' · '+(r.detail?.substring(0,40)||'')+'</div>'
+        +'</div></div>';
+    }).join('');
+  }
+  // Needs attention
+  const attention=MS.filter(m=>m.status&&m.status!=='ปกติ'&&m.status!=='ไม่ได้ใช้งานแล้ว')
+    .sort((a,b)=>{const o={'ไม่สามารถทำงานได้':0,'ชำรุด':1,'ผิดปกติ':2};return (o[a.status]??9)-(o[b.status]??9);})
+    .slice(0,8);
+  const aEl=document.getElementById('kpi-attention-list');
+  if(attention.length===0){
+    aEl.innerHTML='<div style="padding:10px;text-align:center;color:var(--t3);font-size:13px">เครื่องจักรทั้งหมดทำงานปกติ ✅</div>';
+  }else{
+    aEl.innerHTML=attention.map(m=>{
+      const c=m.status==='ไม่สามารถทำงานได้'?'var(--er)':m.status==='ชำรุด'?'var(--bk)':'var(--wn)';
+      const why=m.loc+' · '+m.status+(m.statusNote?' · '+m.statusNote.substring(0,30):'');
+      return'<div class="attention-item">'
+        +'<div class="attention-sev" style="background:'+c+'"></div>'
+        +'<div class="attention-body"><div class="attention-name">'+m.name+' <span style="font-size:10px;color:var(--a2);font-family:monospace">'+m.code+'</span></div>'
+        +'<div class="attention-why">'+why+'</div></div>'
+        +'<button onclick="openEd('+MS.indexOf(m)+')" style="padding:5px 10px;background:rgba(59,130,246,.1);color:var(--a2);border:1px solid rgba(59,130,246,.2);border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap">ดู</button>'
+        +'</div>';
+    }).join('');
+  }
+  // 7-day history chart
+  renderKPIChart();
+}
+
+async function renderKPIChart(){
+  const el=document.getElementById('kpi-hist-chart');
+  try{
+    const snap=await getDocs(query(collection(fdb,'daily_checks'),orderBy('date','desc')));
+    const records=[];
+    snap.forEach(d=>records.push(d.data()));
+    records.reverse(); // oldest first
+    const last7=records.slice(-7);
+    if(last7.length===0){el.innerHTML='<div style="text-align:center;color:var(--t3);font-size:13px;padding:16px">ยังไม่มีข้อมูลการตรวจ<br>เริ่มตรวจได้ที่ Tab 📋 ตรวจรายวัน</div>';return;}
+    const days=['อา','จ','อ','พ','พฤ','ศ','ส'];
+    const bars=last7.map(r=>{
+      const avail=r.total?Math.round(r.ok/r.total*100):0;
+      const color=avail>=90?'var(--ok)':avail>=70?'var(--aw)':'var(--er)';
+      const d=new Date(r.date);const dayName=days[d.getDay()];
+      return'<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">'
+        +'<div style="font-size:10px;color:var(--t2);font-weight:700">'+avail+'%</div>'
+        +'<div style="width:100%;border-radius:4px 4px 0 0;background:'+color+';height:'+(avail*0.6)+'px;min-height:4px;transition:height .3s"></div>'
+        +'<div style="font-size:10px;color:var(--t3)">'+dayName+'</div>'
+        +'<div style="font-size:9px;color:var(--t3)">'+r.date.slice(5)+'</div>'
+        +'</div>';
+    }).join('');
+    el.innerHTML='<div style="display:flex;gap:6px;align-items:flex-end;justify-content:space-around;height:80px">'+bars+'</div>';
+  }catch(e){el.innerHTML='<div style="text-align:center;color:var(--t3);font-size:13px;padding:16px">โหลดข้อมูลไม่ได้</div>';}
+}
+window.renderKPI=renderKPI;
+
+// PM Calendar render
+function renderPMCalendar(machineCode){
+  const months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const grid=document.getElementById('pm-monthly-grid');
+  const info=document.getElementById('pm-next-info');
+  if(!grid)return;
+  const m=MS.find(x=>x.code===machineCode);
+  if(!m){grid.innerHTML='';return;}
+  // ดึง PM data จาก machine object (ถ้ามี)
+  const pmData=m.pmSchedule||[];
+  const now=new Date();const curMonth=now.getMonth();
+  grid.innerHTML=months.map((mn,i)=>{
+    const isPast=i<curMonth;const isCur=i===curMonth;
+    let cls='pm-skip';let icon='—';
+    if(pmData.length>0){
+      const pm=pmData.find(p=>p.month===i);
+      if(pm){
+        if(pm.done){cls='pm-done';icon='✅';}
+        else if(isCur||isPast){cls='pm-due';icon='⚠';}
+        else{cls='pm-plan';icon='📅';}
+      }
+    }
+    return'<div class="pm-month '+cls+'">'+ mn+'<br>'+icon+'</div>';
+  }).join('');
+  if(pmData.length===0){info.textContent='ยังไม่มีข้อมูล PM — ใช้เมนู ⋯ → Upload แผน PM';}
+  else{
+    const nextDue=pmData.find(p=>!p.done&&p.month>=curMonth);
+    if(nextDue){
+      const daysLeft=Math.round((new Date(2026,nextDue.month,1)-now)/(1000*60*60*24));
+      info.textContent=`PM ถัดไป: ${months[nextDue.month]} 2026 (${daysLeft>0?'อีก '+daysLeft+' วัน':'เกินกำหนด'})`;
+      info.style.color=daysLeft<7?'var(--er)':daysLeft<30?'var(--aw)':'var(--ag)';
+    }else{info.textContent='PM ครบทุกรอบแล้ว ✅';info.style.color='var(--ag)';}
+  }
+}
+window.renderPMCalendar=renderPMCalendar;
+
+// ══════════════════════════════════════════════════════════
+// UPDATE switchViewTab — add check+kpi tabs
+// ══════════════════════════════════════════════════════════// ═══ GLOBAL FUNCTION REGISTRY (module-safe) ═══
+// ทำให้ HTML onclick เรียกได้แม้อยู่ใน ES Module
+(function registerGlobals(){
+  const fns = {
+    openEd,saveEd,updSIco,onRepairInput,
+    openAllHist,exportExcel,
+    pDrag,pDrop,pChange,
+    setV,srt,applyF,fStat,
+    ov,ovClose,swTab,openLB,cLB,
+    openMenu,closeMenuEv,cMenu,toggleTh,botN,
+    startMigrate,toast,
+    openAddMachine,setAddGrp,validateAddMachine,saveAddMachine,
+    switchViewTab,renderRepairView,openEdByCode,
+    closeRepairOrder,deleteRepairOrder,linkRepairToMachine,
+    openPRImport,prDrag,prFileDrop,prFileSelected,
+    confirmPRImport,
+    openLineSettings,saveLINESettings,testLINE,
+    setCF,setCFmode:function(m){cfmode=m;},
+    setDCL,submitDailyCheck,filterDCL,dclSetFilter,dclFilterSearch,
+    renderKPI,renderPMCalendar
+  };
+  Object.keys(fns).forEach(k=>{
+    window[k] = fns[k];
+    globalThis[k] = fns[k];
+  });
+})();
+
 init();
 document.getElementById('lb').addEventListener('click',e=>{if(e.target===document.getElementById('lb'))cLB();});
 </script>
@@ -1514,7 +2392,7 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
 <!-- HTML STRUCTURE -->
 <nav id="nav">
   <div class="nmark">⚙</div>
-  <div style="flex-shrink:0"><div class="ntitle">SMC Inspect</div><div class="nsub">S.Khonkaen Foods · 🔥 Real-time <span class="ver-badge">v7</span></div></div>
+  <div style="flex-shrink:0"><div class="ntitle">SMC Inspect</div><div class="nsub">S.Khonkaen Foods · 🔥 Real-time <span class="ver-badge">v9</span></div></div>
   <div class="nsrch"><span style="color:var(--t3);font-size:13px">🔍</span><input id="sinput" type="search" placeholder="ค้นหาชื่อ, รหัส, เลขแจ้งซ่อม..." oninput="applyF()" autocomplete="off"></div>
   <div class="nsp"></div>
   <div class="nvbtn"><button class="nvb" id="vt" onclick="setV('t')">☰</button><button class="nvb on" id="vc" onclick="setV('c')">⊞</button><button class="nvb" id="vk" onclick="setV('k')">≡</button></div>
@@ -1534,16 +2412,21 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
 <div id="offbanner">⚠️ Offline Mode — ข้อมูลจะถูก Sync เมื่อมีการเชื่อมต่ออินเตอร์เน็ต</div>
 
 <div class="view-tab-bar">
-  <button class="vtb on" id="vtb-mach" onclick="switchViewTab('machine')">
-    ⚙ เครื่องจักร
+  <button class="vtb on" id="vtb-mach" onclick="if(window.switchViewTab)switchViewTab('machine')">
+    ⚙ <span class="tab-lbl">เครื่องจักร</span>
     <span id="vtb-mach-cnt" style="background:rgba(59,130,246,.15);color:var(--a2);padding:1px 6px;border-radius:10px;font-size:10px"></span>
   </button>
-  <button class="vtb" id="vtb-repair" onclick="switchViewTab('repair')">
-    🔧 ใบแจ้งซ่อม
+  <button class="vtb" id="vtb-check" onclick="if(window.switchViewTab)switchViewTab('check')">
+    📋 <span class="tab-lbl">ตรวจรายวัน</span>
+    <span id="vtb-check-cnt" style="background:rgba(16,185,129,.15);color:var(--ag);padding:1px 6px;border-radius:10px;font-size:10px"></span>
+  </button>
+  <button class="vtb" id="vtb-repair" onclick="if(window.switchViewTab)switchViewTab('repair')">
+    🔧 <span class="tab-lbl">ใบแจ้งซ่อม</span>
     <span id="vtb-repair-cnt" style="background:rgba(239,68,68,.15);color:var(--er);padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700"></span>
   </button>
-  <div style="flex:1"></div>
-  <button onclick="openAllHist()" style="border:none;background:none;color:var(--t3);font-size:11px;cursor:pointer;padding:8px 10px;font-family:inherit">📋 ประวัติ</button>
+  <button class="vtb" id="vtb-kpi" onclick="if(window.switchViewTab)switchViewTab('kpi')">
+    📊 <span class="tab-lbl">KPI</span>
+  </button>
 </div>
 
 <main id="main">
@@ -1594,15 +2477,113 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
   </div>
 </div>
 
+<!-- DAILY CHECKLIST VIEW -->
+<div id="checkView" style="display:none">
+
+  <!-- STICKY COMMAND BAR -->
+  <div id="dcl-sticky">
+    <!-- Row 1: Date | Inspector | Submit -->
+    <div class="dcl-row1">
+      <div class="dcl-datebox" id="dcl-date">📅 —</div>
+      <input type="text" id="dcl-inspector" placeholder="👤 ชื่อผู้ตรวจ"
+        autocomplete="name" oninput="localStorage.setItem('smc_inspector',this.value)">
+      <div style="flex:1"></div>
+      <button class="dcl-submit-btn" id="dcl-submit-btn"
+        onclick="submitDailyCheck()" disabled>ส่งรายงาน ✓</button>
+    </div>
+    <!-- Row 2: KPI Pills + Progress -->
+    <div class="dcl-row2">
+      <span class="dcl-pill dp-all">📋 <span id="dkp-total">0</span></span>
+      <span class="dcl-pill dp-done">✅ <span id="dkp-done">0</span></span>
+      <span class="dcl-pill dp-warn">⚠️ <span id="dkp-warn">0</span></span>
+      <span class="dcl-pill dp-err">🔴 <span id="dkp-err">0</span></span>
+      <span class="dcl-pill dp-left">⏳ <span id="dkp-left">0</span></span>
+      <div class="dcl-prog-group">
+        <div class="dcl-prog-bg">
+          <div class="dcl-prog-fill" id="dcl-prog-fill" style="width:0%"></div>
+        </div>
+        <div class="dcl-prog-pct" id="dcl-prog-pct">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done today banner (hidden by default) -->
+  <div class="dcl-done-banner" id="dcl-done-banner">
+    ✅ ส่งรายงานวันนี้แล้ว — ดูผลสรุปที่ 📊 KPI
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="dcl-filter-bar">
+    <div class="dcl-search-wrap">
+      <span style="color:var(--t3);font-size:11px">🔍</span>
+      <input id="dcl-search-input" type="search"
+        placeholder="ค้นหา..." oninput="dclFilterSearch()">
+    </div>
+    <button class="dcl-fb on" id="dcl-f-all"  onclick="dclSetFilter('all')">ทั้งหมด</button>
+    <button class="dcl-fb"   id="dcl-f-none" onclick="dclSetFilter('none')">ยังไม่ตรวจ</button>
+    <button class="dcl-fb"   id="dcl-f-ok"   onclick="dclSetFilter('ok')">✅</button>
+    <button class="dcl-fb"   id="dcl-f-warn" onclick="dclSetFilter('warn')">⚠️</button>
+    <button class="dcl-fb"   id="dcl-f-err"  onclick="dclSetFilter('err')">🔴</button>
+  </div>
+
+  <!-- CHECKLIST ITEMS — rendered by JS -->
+  <div id="dclContent"></div>
+
+</div>
+
+<!-- KPI EXECUTIVE DASHBOARD --><!-- KPI EXECUTIVE DASHBOARD --><!-- KPI EXECUTIVE DASHBOARD -->
+<div id="kpiView" style="display:none">
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kc:var(--ag)">
+      <div class="kpi-n" id="kpi-avail">—%</div>
+      <div class="kpi-l">Machine Availability</div>
+      <div class="kpi-sub" id="kpi-avail-sub">วันนี้</div>
+      <div class="kpi-bar-wrap"><div class="kpi-bar-bg"><div class="kpi-bar-fill" id="kpi-avail-bar" style="background:var(--ag);width:0%"></div></div></div>
+    </div>
+    <div class="kpi-card" style="--kc:var(--er)">
+      <div class="kpi-n" id="kpi-down">0</div>
+      <div class="kpi-l">เครื่องหยุดทำงาน</div>
+      <div class="kpi-sub" id="kpi-down-sub">ทำงานไม่ได้ + ชำรุด</div>
+    </div>
+    <div class="kpi-card" style="--kc:var(--aw)">
+      <div class="kpi-n" id="kpi-pm">—%</div>
+      <div class="kpi-l">PM Compliance</div>
+      <div class="kpi-sub" id="kpi-pm-sub">เดือนนี้</div>
+      <div class="kpi-bar-wrap"><div class="kpi-bar-bg"><div class="kpi-bar-fill" id="kpi-pm-bar" style="background:var(--aw);width:0%"></div></div></div>
+    </div>
+    <div class="kpi-card" style="--kc:var(--at)">
+      <div class="kpi-n" id="kpi-check">0</div>
+      <div class="kpi-l">ตรวจรายวันวันนี้</div>
+      <div class="kpi-sub" id="kpi-check-sub">จาก 176 เครื่อง</div>
+    </div>
+  </div>
+  <!-- Open Repair Orders -->
+  <div class="kpi-section">🔧 ใบแจ้งซ่อมค้าง</div>
+  <div class="attention-list" id="kpi-repair-list"><div style="padding:10px;text-align:center;color:var(--t3);font-size:13px">ไม่มีใบแจ้งซ่อมค้าง ✅</div></div>
+  <!-- Needs Attention -->
+  <div class="kpi-section">⚠️ เครื่องต้องการความสนใจ</div>
+  <div class="attention-list" id="kpi-attention-list"></div>
+  <!-- PM Due Soon -->
+  <div class="kpi-section">📅 PM ใกล้ถึงกำหนด</div>
+  <div class="attention-list" id="kpi-pm-list"><div style="padding:10px;text-align:center;color:var(--t3);font-size:13px">ยังไม่มีข้อมูลแผน PM — Upload Excel ในแต่ละเครื่อง</div></div>
+  <!-- Daily check history -->
+  <div class="kpi-section">📋 ประวัติการตรวจ 7 วันล่าสุด</div>
+  <div style="padding:0 14px 16px"><div id="kpi-hist-chart" style="background:var(--card);border:1px solid var(--b);border-radius:var(--r);padding:12px;overflow-x:auto"></div></div>
+</div>
+
 <nav id="bnn"><div class="bni">
-  <button class="bnb on" id="bn-h" onclick="botN('h')"><span class="bnb-i">🏠</span><span>หน้าหลัก</span></button>
-  <button class="bnb" id="bn-s" onclick="botN('s')"><span class="bnb-i">🔍</span><span>ค้นหา</span></button>
+  <button class="bnb on" id="bn-h" onclick="switchViewTab('machine');botN('h')"><span class="bnb-i">⚙</span><span>เครื่องจักร</span></button>
+  <button class="bnb" id="bn-c" onclick="switchViewTab('check');botN('c')" style="position:relative">
+    <span class="bnb-i">📋</span><span>ตรวจวัน</span>
+    <span id="bnCheckBadge" style="position:absolute;top:6px;right:4px;background:var(--ag);color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:8px;display:none;min-width:14px;text-align:center">!</span>
+  </button>
   <div class="bnfab"><button class="fab" onclick="openMenu()">＋</button></div>
   <button class="bnb" id="bn-z" onclick="switchViewTab('repair');botN('z')" style="position:relative">
     <span class="bnb-i">🔧</span><span>ซ่อม</span>
-    <span id="bnRepairBadge" style="position:absolute;top:6px;right:8px;background:var(--er);color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:8px;display:none;min-width:14px;text-align:center"></span>
+    <span id="bnRepairBadge" style="position:absolute;top:6px;right:4px;background:var(--er);color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:8px;display:none;min-width:14px;text-align:center"></span>
   </button>
-  <button class="bnb" id="bn-e" onclick="exportExcel()"><span class="bnb-i">⬇</span><span>Export</span></button>
+  <button class="bnb" id="bn-k" onclick="switchViewTab('kpi');botN('k')"><span class="bnb-i">📊</span><span>KPI</span></button>
 </div></nav>
 
 <!-- MENU -->
@@ -1669,6 +2650,14 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
         <div class="fr"><div class="fd"><label>HP</label><div class="fv" id="d-hp">—</div></div><div class="fd"><label>ตำแหน่ง</label><div class="fv" id="d-loc">—</div></div></div>
         <div class="fr"><div class="fd"><label>ตรวจไปแล้ว</label><div class="fv" id="d-cnt">—</div></div><div class="fd"><label>ตรวจล่าสุด</label><div class="fv" id="d-last">—</div></div></div>
         <div class="fd"><label>เลขที่ใบแจ้งซ่อมปัจจุบัน</label><div class="fv" id="d-repair" style="color:#a78bfa">—</div></div>
+        <!-- PM Calendar -->
+        <div class="fd" style="margin-top:4px">
+          <label>📅 แผน PM ปี 2026</label>
+          <div id="d-pm-cal" style="background:var(--card);border:1px solid var(--b);border-radius:var(--r2);padding:10px">
+            <div class="pm-grid" id="pm-monthly-grid"></div>
+            <div style="font-size:11px;color:var(--t2);margin-top:8px" id="pm-next-info">ยังไม่มีข้อมูล PM — Upload แผน PM Excel ผ่านเมนู ⋯</div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="mft"><button class="btn-g" onclick="ov('eov',false)">ยกเลิก</button><button class="btn-p" onclick="saveEd()">💾 บันทึก → Firebase</button></div>
