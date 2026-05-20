@@ -874,8 +874,11 @@ function validateRepairNo(val){
   return /^[a-zA-Z0-9ก-๙\-_/\.]{1,50}$/.test(val);
 }
 
+// ── PM PLAN DATA (PM_Plan_112Machines.xlsx — 112 records) ──
+const PM_DATA = {"0001":{"n":"เครื่องทำน้ำแข็ง No.1","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"0002":{"n":"เครื่องทำน้ำแข็ง No.2","g":"ระบบทำความเย็น","l":"High","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"44-318-104-0143":{"n":"ห้องเย็น No.1","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"44-318-104-0145":{"n":"ห้องเย็น No.2","g":"ระบบทำความเย็น","l":"High","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"44-318-104-0142":{"n":"ห้องเย็น No.3","g":"ระบบทำความเย็น","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"44-318-104-0144":{"n":"ห้องเย็น No.4","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"0047":{"n":"ห้องเย็น No.5","g":"ระบบทำความเย็น","l":"High","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"44-318-104-0146":{"n":"ห้องเย็น No.6","g":"ระบบทำความเย็น","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0048":{"n":"ห้องเย็น No.7/1","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"0049":{"n":"ห้องเย็น No.8/1","g":"ระบบทำความเย็น","l":"High","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"0050":{"n":"ห้องเย็น No.11","g":"ระบบทำความเย็น","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0051":{"n":"ห้องเย็น A","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"0052":{"n":"ห้องเย็น B","g":"ระบบทำความเย็น","l":"High","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"0053":{"n":"ห้องเย็น No.12","g":"ระบบทำความเย็น","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0054":{"n":"ห้องเย็น No.13","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"0055":{"n":"Air Cool No.1","g":"ระบบทำความเย็น","l":"High","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"0056":{"n":"Air Cool No.2","g":"ระบบทำความเย็น","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0057":{"n":"Air Cool No.4","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"0058":{"n":"Air Cool No.5","g":"ระบบทำความเย็น","l":"High","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"0059":{"n":"Air Cool No.6","g":"ระบบทำความเย็น","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"44-318-104-0148":{"n":"Air Cool No.7","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"44-318-104-0177":{"n":"Air Cool No.8","g":"ระบบทำความเย็น","l":"High","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"44-318-104-0182":{"n":"Air Cool No.9","g":"ระบบทำความเย็น","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0063":{"n":"Chiller No.1","g":"ระบบทำความเย็น","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0064":{"n":"Chiller No.2","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"0069":{"n":"Comp No.1 WH","g":"ระบบทำความเย็น","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0070":{"n":"Comp No.2 WH","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"0071":{"n":"Comp No.3 WH","g":"ระบบทำความเย็น","l":"High","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"0101":{"n":"AHU","g":"ระบบทำความเย็น","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"44-318-104-0182B":{"n":"Air Cool No.3","g":"ระบบทำความเย็น","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0006":{"n":"เครื่องสับผสม (Chopper)","g":"สายการผลิต","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0036":{"n":"เครื่องลดอุณหภูมิน้ำข้าวต้ม","g":"สายการผลิต","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0061":{"n":"รถโฟล์คลิฟท์ No.1","g":"สายการผลิต","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0081":{"n":"เครื่อง Slide PUMA 700 EB","g":"สายการผลิต","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0076":{"n":"เครื่องสับผสม SEYDELMANN 120K","g":"สายการผลิต","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0077":{"n":"เครื่องอัด Handmann VF-200","g":"สายการผลิต","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0104":{"n":"หม้อต้มไฟฟ้า Talsa","g":"สายการผลิต","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0082":{"n":"เครื่องซีลสูญญากาศ Henkovac","g":"สายการผลิต","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0087":{"n":"หม้อต้มหมูยอ No.1","g":"สายการผลิต","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0088":{"n":"หม้อต้มหมูยอ No.2","g":"สายการผลิต","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0089":{"n":"หม้อต้มหมูยอ No.3","g":"สายการผลิต","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0090":{"n":"ตัวดูดอากาศห้องต้มหมูยอ","g":"สายการผลิต","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0091":{"n":"ตัวเติมอากาศห้องต้มหมูยอ","g":"สายการผลิต","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0093":{"n":"เครื่องซีลสูญญากาศ ULTRA VAC","g":"สายการผลิต","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0004":{"n":"ถังผสมตัวใหญ่ No.1","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"44-318-104-0101":{"n":"ถังผสมตัวเล็ก No.2","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"44-318-104-0153":{"n":"เครื่องบดเนื้อ No.52","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0005":{"n":"เครื่องสไลด์เนื้อ","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0007":{"n":"เครื่องหั่นผัก No.1","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0008":{"n":"เครื่องตัดขาหมู","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"44-318-104-0158":{"n":"หม้อ Jacket No.1","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0013":{"n":"เตาทอดไฟฟ้า","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0014":{"n":"เครื่องย่าง","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0015":{"n":"Jip Crane 200 KG.","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0016":{"n":"Blanching No.5","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0017":{"n":"เครื่องกวน (Jacket Auto)","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"44-318-104-0160":{"n":"Blanching No.1","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"44-318-104-0179":{"n":"Blanching No.2","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0018":{"n":"Blanching No.3","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0019":{"n":"Blanching No.4","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0020":{"n":"ตู้นึ่งข้าว 26 ถาด No.1","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0021":{"n":"เครื่องล้างผัก","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0022":{"n":"เครื่องหั่นผัก No.2","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0023":{"n":"เครื่องหั่นเห็ดหอม","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0024":{"n":"เครื่องบดเนื้อ No.42","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0026":{"n":"เครื่องผสมแป้งเค้ก 50 ลิตร","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0027":{"n":"เครื่องสไลด์หมูยอ","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0028":{"n":"ตู้นึ่งข้าว 26 ถาด No.2","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0029":{"n":"ตู้นึ่งข้าว 26 ถาด No.3","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0035":{"n":"Blanching ลวกภาชนะ","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0062":{"n":"รถโฟล์คลิฟท์ No.2 (รถน้ำมัน)","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0078":{"n":"แอร์ห้องตัดแต่งเนื้อใหม่","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0084":{"n":"เครื่องปั้นลูกชิ้น","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"BSW-001":{"n":"เครื่องเลื่อยกระดูก Torrey 305 SH","g":"สายการผลิต","l":"Medium","s":[{"m":3,"mn":"เม.ย.","t":"PM3"},{"m":9,"mn":"ต.ค.","t":"PM3"}],"total":"2"},"0038":{"n":"เครื่อง L Seal","g":"บรรจุภัณฑ์","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0042":{"n":"เครื่องติดสติ๊กเกอร์ No.1","g":"บรรจุภัณฑ์","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0037":{"n":"เครื่องแพ็คสูญญากาศ","g":"บรรจุภัณฑ์","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"0039":{"n":"เครื่อง Shrink wrap No.1","g":"บรรจุภัณฑ์","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0040":{"n":"เครื่อง Shrink wrap No.2","g":"บรรจุภัณฑ์","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"0085":{"n":"เครื่อง Top seal Rotary","g":"บรรจุภัณฑ์","l":"High","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"0043":{"n":"เครื่องยิงโค้ต No.1","g":"บรรจุภัณฑ์","l":"Medium","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"0044":{"n":"เครื่องยิงโค้ต No.2","g":"บรรจุภัณฑ์","l":"Medium","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0092":{"n":"แอร์ห้องบรรจุหมูยอ","g":"บรรจุภัณฑ์","l":"Medium","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0095":{"n":"เครื่องรูดกล่อง","g":"บรรจุภัณฑ์","l":"Medium","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"0096":{"n":"เครื่องปิดปากถาด","g":"บรรจุภัณฑ์","l":"Medium","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0098":{"n":"เครื่องบรรจุของเหลวกึ่งอัตโนมัติ No.1","g":"บรรจุภัณฑ์","l":"Medium","s":[{"m":2,"mn":"มี.ค.","t":"PM2"},{"m":5,"mn":"มิ.ย.","t":"PM2"},{"m":8,"mn":"ก.ย.","t":"PM2"},{"m":11,"mn":"ธ.ค.","t":"PM2"}],"total":"4"},"0099":{"n":"เครื่องบรรจุของเหลวกึ่งอัตโนมัติ No.2","g":"บรรจุภัณฑ์","l":"Medium","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0009":{"n":"เครื่องตรวจจับโลหะ No.3","g":"ตรวจสอบคุณภาพ","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"44-318-104-0166":{"n":"เครื่องตรวจจับโลหะ No.1","g":"ตรวจสอบคุณภาพ","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0041":{"n":"เครื่องตรวจจับโลหะ No.2","g":"ตรวจสอบคุณภาพ","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"44-318-104-0150":{"n":"เครื่องอัดไส้กรอก","g":"ระบบลำเลียง","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0086":{"n":"รอกไฟฟ้า","g":"ระบบลำเลียง","l":"High","s":[{"m":1,"mn":"ก.พ.","t":"PM2"},{"m":4,"mn":"พ.ค.","t":"PM2"},{"m":7,"mn":"ส.ค.","t":"PM2"},{"m":10,"mn":"พ.ย.","t":"PM2"}],"total":"4"},"44-318-104-0162":{"n":"สายพานลำเลียง No.1","g":"ระบบลำเลียง","l":"Medium","s":[{"m":1,"mn":"ก.พ.","t":"PM3"},{"m":7,"mn":"ส.ค.","t":"PM3"}],"total":"2"},"0029B":{"n":"สายพานลำเลียง No.2","g":"ระบบลำเลียง","l":"Medium","s":[{"m":1,"mn":"ก.พ.","t":"PM3"},{"m":7,"mn":"ส.ค.","t":"PM3"}],"total":"2"},"44-318-104-0161":{"n":"สายพานลำเลียง No.3","g":"ระบบลำเลียง","l":"Medium","s":[{"m":1,"mn":"ก.พ.","t":"PM3"},{"m":7,"mn":"ส.ค.","t":"PM3"}],"total":"2"},"0030":{"n":"เครื่อง Seal Conveyer No.1","g":"ระบบลำเลียง","l":"Medium","s":[{"m":1,"mn":"ก.พ.","t":"PM3"},{"m":7,"mn":"ส.ค.","t":"PM3"}],"total":"2"},"0031":{"n":"เครื่อง Seal Conveyer No.2","g":"ระบบลำเลียง","l":"Medium","s":[{"m":1,"mn":"ก.พ.","t":"PM3"},{"m":7,"mn":"ส.ค.","t":"PM3"}],"total":"2"},"0032":{"n":"เครื่อง Seal Conveyor No.3","g":"ระบบลำเลียง","l":"Medium","s":[{"m":1,"mn":"ก.พ.","t":"PM3"},{"m":7,"mn":"ส.ค.","t":"PM3"}],"total":"2"},"0034":{"n":"เครื่อง Seal Conveyer (แบบแนวนอน)","g":"ระบบลำเลียง","l":"Medium","s":[{"m":1,"mn":"ก.พ.","t":"PM3"},{"m":7,"mn":"ส.ค.","t":"PM3"}],"total":"2"},"0083":{"n":"เครื่องตรวจจับโลหะสายพาน S+S","g":"ระบบลำเลียง","l":"Medium","s":[{"m":1,"mn":"ก.พ.","t":"PM3"},{"m":7,"mn":"ส.ค.","t":"PM3"}],"total":"2"},"0097":{"n":"เครื่องหั่นผัก (แบบสายพานลำเลียง)","g":"ระบบลำเลียง","l":"Medium","s":[{"m":1,"mn":"ก.พ.","t":"PM3"},{"m":7,"mn":"ส.ค.","t":"PM3"}],"total":"2"},"0102":{"n":"เครน (ชั้นลอย)","g":"ระบบลำเลียง","l":"Medium","s":[{"m":1,"mn":"ก.พ.","t":"PM3"},{"m":7,"mn":"ส.ค.","t":"PM3"}],"total":"2"},"44-318-104-0167":{"n":"Boiler 2 ton No.1 (ระบบแก๊ส)","g":"ระบบสาธารณูปโภค","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0065":{"n":"Boiler 2 ton No.2 (ระบบแก๊ส)","g":"ระบบสาธารณูปโภค","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0068":{"n":"สถานีแก๊ส","g":"ระบบสาธารณูปโภค","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0073":{"n":"ระบบบำบัดน้ำเสีย","g":"ระบบสาธารณูปโภค","l":"Critical","s":[{"m":0,"mn":"ม.ค.","t":"PM1"},{"m":1,"mn":"ก.พ.","t":"PM1"},{"m":2,"mn":"มี.ค.","t":"PM1"},{"m":3,"mn":"เม.ย.","t":"PM1"},{"m":4,"mn":"พ.ค.","t":"PM1"},{"m":5,"mn":"มิ.ย.","t":"PM1"},{"m":6,"mn":"ก.ค.","t":"PM1"},{"m":7,"mn":"ส.ค.","t":"PM1"},{"m":8,"mn":"ก.ย.","t":"PM1"},{"m":9,"mn":"ต.ค.","t":"PM1"},{"m":10,"mn":"พ.ย.","t":"PM1"},{"m":11,"mn":"ธ.ค.","t":"PM1"}],"total":"12"},"0074":{"n":"Steam box No.1","g":"ระบบสาธารณูปโภค","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"0075":{"n":"Steam box No.2","g":"ระบบสาธารณูปโภค","l":"High","s":[{"m":0,"mn":"ม.ค.","t":"PM2"},{"m":3,"mn":"เม.ย.","t":"PM2"},{"m":6,"mn":"ก.ค.","t":"PM2"},{"m":9,"mn":"ต.ค.","t":"PM2"}],"total":"4"},"44-318-104-0168":{"n":"เครื่องกรองน้ำ No.1 (บอยเลอร์)","g":"ระบบสาธารณูปโภค","l":"Medium","s":[{"m":0,"mn":"ม.ค.","t":"PM3"},{"m":6,"mn":"ก.ค.","t":"PM3"}],"total":"2"},"44-318-104-0168B":{"n":"เครื่องกรองน้ำ No.2 (น้ำใช้,บริโภค)","g":"ระบบสาธารณูปโภค","l":"Medium","s":[{"m":0,"mn":"ม.ค.","t":"PM3"},{"m":6,"mn":"ก.ค.","t":"PM3"}],"total":"2"},"0066":{"n":"ปั๊มลม No.1","g":"ระบบสาธารณูปโภค","l":"Medium","s":[{"m":0,"mn":"ม.ค.","t":"PM3"},{"m":6,"mn":"ก.ค.","t":"PM3"}],"total":"2"},"0067":{"n":"ปั๊มลม No.2","g":"ระบบสาธารณูปโภค","l":"Medium","s":[{"m":0,"mn":"ม.ค.","t":"PM3"},{"m":6,"mn":"ก.ค.","t":"PM3"}],"total":"2"}};
+
 // App version
-const APP_VERSION = 'v8.0.0';
+const APP_VERSION = 'v9.0.0';
 const APP_UPDATED = '${new Date().toLocaleDateString("th-TH")}';
 
 // ── LINE MESSAGING API CONFIG (ผ่าน Make.com) ──
@@ -1000,6 +1003,31 @@ async function getFBHistory(code){
   try{const q=query(collection(fdb,'history'),orderBy('savedAt','desc'));const s=await getDocs(q);const h=[];s.forEach(d=>{if(d.data().code===code)h.push(d.data());});return h;}
   catch(e){return[];}
 }
+async function getDCLHistory(code){
+  // โหลดประวัติจาก daily_checks collection — เฉพาะวันที่ตรวจเครื่องนี้
+  try{
+    const q=query(collection(fdb,'daily_checks'),orderBy('date','desc'));
+    const snap=await getDocs(q);
+    const hist=[];
+    snap.forEach(d=>{
+      const data=d.data();
+      if(data.details&&data.details[code]){
+        const st=data.details[code].status;
+        const statusMap={ok:'ปกติ',wn:'ผิดปกติ',er:'ไม่สามารถทำงานได้'};
+        hist.push({
+          date:data.date,
+          inspector:data.inspector||'',
+          status:statusMap[st]||st||'',
+          statusNote:'',
+          savedAt:data.date+'T00:00:00.000Z',
+          photos:[]
+        });
+      }
+    });
+    return hist;
+  }catch(e){console.warn('getDCLHistory:',e);return[];}
+}
+
 async function getAllFBHistory(){
   try{const q=query(collection(fdb,'history'),orderBy('savedAt','desc'));const s=await getDocs(q);const h=[];s.forEach(d=>h.push(d.data()));return h;}
   catch(e){return[];}
@@ -1155,13 +1183,25 @@ async function openEd(idx){
   const photos=m.photos||[];
   if(photos.length>0){photos.forEach(src=>{const img=document.createElement('img');img.className='d-ph-img';img.src=src;img.loading='lazy';img.onclick=()=>openLB(src);dpc.appendChild(img);});}
   else{dpc.innerHTML='<div class="d-ph-none">📷 ยังไม่มีรูปภาพ</div>';}
-  // History
+  // History — รวม manual save + daily check
   document.getElementById('hlist').innerHTML='<div class="hempty">⏳ กำลังโหลดประวัติ...</div>';
-  const hist=await getFBHistory(m.code);
-  document.getElementById('d-cnt').textContent=hist.length+' ครั้ง';
-  document.getElementById('d-last').textContent=hist.length?(hist[0].inspectDate||hist[0].savedAt?.split('T')[0]||'—'):'—';
+  const [hist, dclHist] = await Promise.all([getFBHistory(m.code), getDCLHistory(m.code)]);
+  // รวม+เรียงตามวันที่ ล่าสุดก่อน
+  const allHist = [...hist, ...dclHist].sort((a,b)=>{
+    const da=a.savedAt||a.date||'';const db=b.savedAt||b.date||'';
+    return db.localeCompare(da);
+  });
+  // แสดงแค่ที่ไม่ซ้ำวันกัน
+  const seenDates=new Set();
+  const dedupedHist=allHist.filter(h2=>{
+    const d=h2.date||h2.savedAt?.split('T')[0]||'';
+    if(!d||seenDates.has(d)) return false;
+    seenDates.add(d);return true;
+  });
+  document.getElementById('d-cnt').textContent=dedupedHist.length+' วัน';
+  document.getElementById('d-last').textContent=dedupedHist.length?(dedupedHist[0].date||dedupedHist[0].savedAt?.split('T')[0]||'—'):'—';
   document.getElementById('d-repair').textContent=m.repairNo||'—';
-  if(!hist.length){document.getElementById('hlist').innerHTML='<div class="hempty">📭 ยังไม่มีประวัติ</div>';}
+  if(!dedupedHist.length){document.getElementById('hlist').innerHTML='<div class="hempty">📭 ยังไม่มีประวัติ</div>';}
   else{document.getElementById('hlist').innerHTML=hist.map((h,i)=>{
     const sc=scol(h.status);const isLast=i===hist.length-1;
     const phs=(h.photos||[]).map(p=>'<img class="hpth" src="'+p+'" onclick="openLB(this.src)">').join('');
@@ -2166,7 +2206,8 @@ function updateDCLSubmitBtn(){
   const btn=document.getElementById('dcl-submit-btn');
   if(!btn) return;
   const done=Object.keys(dclState).length;
-  btn.disabled=dclSubmitted||done<Math.floor(MS.length*0.9);
+  const insp2=document.getElementById('dcl-inspector')?.value.trim()||'';
+  btn.disabled=dclSubmitted||!insp2||done===0;
 }
 
 // ── LEGACY filterDCL ─────────────────────────────────────
@@ -2187,7 +2228,6 @@ async function submitDailyCheck(){
   const inspector=document.getElementById('dcl-inspector')?.value.trim()||'';
   if(!inspector){ toast('⚠ กรุณาใส่ชื่อผู้ตรวจ'); document.getElementById('dcl-inspector')?.focus(); return; }
   const done=Object.keys(dclState).length;
-  if(done<Math.floor(MS.length*0.9)){ toast('⚠ ต้องตรวจ 90%+ ('+Math.floor(MS.length*0.9)+' เครื่อง)'); return; }
   toast('⏳ กำลังส่งรายงาน...');
   try{
     const vals=Object.values(dclState);
@@ -2319,36 +2359,49 @@ window.renderKPI=renderKPI;
 
 // PM Calendar render
 function renderPMCalendar(machineCode){
-  const months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const MNS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
   const grid=document.getElementById('pm-monthly-grid');
   const info=document.getElementById('pm-next-info');
   if(!grid)return;
   const m=MS.find(x=>x.code===machineCode);
-  if(!m){grid.innerHTML='';return;}
-  // ดึง PM data จาก machine object (ถ้ามี)
-  const pmData=m.pmSchedule||[];
+  if(!m){grid.innerHTML='';if(info)info.textContent='';return;}
   const now=new Date();const curMonth=now.getMonth();
-  grid.innerHTML=months.map((mn,i)=>{
-    const isPast=i<curMonth;const isCur=i===curMonth;
-    let cls='pm-skip';let icon='—';
-    if(pmData.length>0){
-      const pm=pmData.find(p=>p.month===i);
-      if(pm){
-        if(pm.done){cls='pm-done';icon='✅';}
-        else if(isCur||isPast){cls='pm-due';icon='⚠';}
-        else{cls='pm-plan';icon='📅';}
-      }
+  // Match PM_DATA by code or machine name
+  let pmEntry=PM_DATA[machineCode]||PM_DATA[m.code]||null;
+  if(!pmEntry){
+    const mname=m.name.toLowerCase().substring(0,10);
+    for(const v of Object.values(PM_DATA)){
+      if(v.n&&v.n.toLowerCase().includes(mname.substring(0,7))){pmEntry=v;break;}
     }
-    return'<div class="pm-month '+cls+'">'+ mn+'<br>'+icon+'</div>';
+  }
+  const schedule=pmEntry?pmEntry.s:(m.pmSchedule||[]).map(p=>({m:p.month,mn:MNS[p.month],t:p.type||'PM'}));
+  const pmMonths=new Set(schedule.map(s=>s.m));
+  if(pmMonths.size===0){
+    grid.innerHTML=MNS.map(mn=>'<div class="pm-month pm-skip">'+mn+'<br><span style="font-size:9px">—</span></div>').join('');
+    if(info){info.textContent='ไม่พบแผน PM ในระบบ';info.style.color='var(--t3)';}
+    return;
+  }
+  grid.innerHTML=MNS.map((mn,i)=>{
+    if(!pmMonths.has(i)) return'<div class="pm-month pm-skip">'+mn+'<br><span style="font-size:9px">—</span></div>';
+    const entry=schedule.find(s=>s.m===i);
+    const pt=entry?entry.t:'PM';
+    let cls,icon;
+    if(i<curMonth){cls='pm-done';icon='✅';}
+    else if(i===curMonth){cls='pm-due';icon='⚠️';}
+    else{cls='pm-plan';icon='📅';}
+    return'<div class="pm-month '+cls+'" title="'+pt+'">'+mn+'<br><span style="font-size:9px;font-weight:700">'+pt+'</span></div>';
   }).join('');
-  if(pmData.length===0){info.textContent='ยังไม่มีข้อมูล PM — ใช้เมนู ⋯ → Upload แผน PM';}
-  else{
-    const nextDue=pmData.find(p=>!p.done&&p.month>=curMonth);
-    if(nextDue){
-      const daysLeft=Math.round((new Date(2026,nextDue.month,1)-now)/(1000*60*60*24));
-      info.textContent=`PM ถัดไป: ${months[nextDue.month]} 2026 (${daysLeft>0?'อีก '+daysLeft+' วัน':'เกินกำหนด'})`;
-      info.style.color=daysLeft<7?'var(--er)':daysLeft<30?'var(--aw)':'var(--ag)';
-    }else{info.textContent='PM ครบทุกรอบแล้ว ✅';info.style.color='var(--ag)';}
+  if(info){
+    const nextPM=schedule.find(s=>s.m>=curMonth);
+    if(nextPM){
+      const dLeft=Math.round((new Date(2026,nextPM.m,15)-now)/86400000);
+      info.style.color=dLeft<=0?'var(--er)':dLeft<14?'var(--aw)':'var(--ag)';
+      info.textContent=(dLeft<=0?'⚠️ ถึงกำหนด PM: ':'📅 PM ถัดไป: ')+MNS[nextPM.m]+' 2568'+(dLeft>0?' (อีก '+dLeft+' วัน)':' (เกิน '+Math.abs(dLeft)+' วัน)');
+    }else{info.textContent='✅ PM ครบทุกรอบปีนี้';info.style.color='var(--ag)';}
+    if(pmEntry){
+      const sub=document.getElementById('pm-sub-info');
+      if(sub) sub.textContent='กลุ่ม: '+pmEntry.g+' | '+pmEntry.l+' | รวม '+pmEntry.total+' ครั้ง/ปี';
+    }
   }
 }
 window.renderPMCalendar=renderPMCalendar;
@@ -2652,10 +2705,11 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
         <div class="fd"><label>เลขที่ใบแจ้งซ่อมปัจจุบัน</label><div class="fv" id="d-repair" style="color:#a78bfa">—</div></div>
         <!-- PM Calendar -->
         <div class="fd" style="margin-top:4px">
-          <label>📅 แผน PM ปี 2026</label>
+          <label>📅 แผน PM ปี 2568 <span style="font-size:9px;background:rgba(16,185,129,.12);color:var(--ok);padding:1px 6px;border-radius:8px;border:1px solid rgba(16,185,129,.2)">จาก Excel</span></label>
           <div id="d-pm-cal" style="background:var(--card);border:1px solid var(--b);border-radius:var(--r2);padding:10px">
             <div class="pm-grid" id="pm-monthly-grid"></div>
-            <div style="font-size:11px;color:var(--t2);margin-top:8px" id="pm-next-info">ยังไม่มีข้อมูล PM — Upload แผน PM Excel ผ่านเมนู ⋯</div>
+            <div style="font-size:11px;color:var(--t2);margin-top:6px" id="pm-next-info">—</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:2px" id="pm-sub-info"></div>
           </div>
         </div>
       </div>
