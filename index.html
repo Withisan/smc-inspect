@@ -518,7 +518,7 @@ body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;background:var(
 @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* MAIN */
-#main{padding-top:var(--hh);padding-bottom:24px;min-height:100vh}
+#main{padding-top:var(--hh);padding-bottom:24px}
 
 /* STATS */
 #stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:12px 14px 0}
@@ -1562,29 +1562,25 @@ function updateRepairCounts(){
 
 // Switch View Tab
 function switchViewTab(tab){
-  currentViewTab = tab;
-  // อัปเดต active tab
+  currentViewTab=tab;
+  // Update tab buttons
   ['machine','check','repair','kpi'].forEach(t=>{
     document.getElementById('vtb-'+t)?.classList.toggle('on',t===tab);
   });
-  // ซ่อน/แสดง views
-  const machineArea=document.getElementById('stats');
-  const fbar=document.getElementById('fbar');
-  const vcont=document.getElementById('vcont');
-  const repairView=document.getElementById('repairView');
-  const checkView=document.getElementById('checkView');
-  const kpiView=document.getElementById('kpiView');
-  const isMachine=tab==='machine';
-  machineArea.style.display=isMachine?'':'none';
-  fbar.style.display=isMachine?'':'none';
-  vcont.style.display=isMachine?'':'none';
-  repairView.style.display=tab==='repair'?'block':'none';
-  checkView.style.display=tab==='check'?'block':'none';
-  kpiView.style.display=tab==='kpi'?'block':'none';
-  if(isMachine) render();
+  // Machine-specific elements
+  const show = (id,v)=>{ const el=document.getElementById(id); if(el) el.style.display=v; };
+  const isMachine = tab==='machine';
+  show('stats', isMachine ? '' : 'none');
+  show('fbar',  isMachine ? '' : 'none');
+  show('vcont', isMachine ? '' : 'none');
+  show('repairView', tab==='repair' ? 'block' : 'none');
+  show('checkView',  tab==='check'  ? 'block' : 'none');
+  show('kpiView',    tab==='kpi'    ? 'block' : 'none');
+  // Run view logic
+  if(isMachine)     render();
   else if(tab==='repair') renderRepairView();
-  else if(tab==='check') initDCL();
-  else if(tab==='kpi') renderKPI();
+  else if(tab==='check')  initDCL();
+  else if(tab==='kpi')    renderKPI();
 }
 window.switchViewTab=switchViewTab;
 
@@ -1950,9 +1946,10 @@ async function init(){
       if(stores.includes('m')){const t=db.transaction('m','readonly');const r=t.objectStore('m').count();r.onsuccess=()=>{if(r.result>0){document.getElementById('mg-count').textContent=r.result;setTimeout(()=>ov('migMod',true),2000);}db.close();};}else db.close();
     };
   }catch(e){}
-  setV('c');
-  // render เรียกผ่าน setV แล้ว แต่เพิ่ม safety render
-  setTimeout(()=>{ if(typeof render==='function') render(); },500);
+  // เริ่มที่หน้าตรวจรายวันก่อนเสมอ
+  switchViewTab('check');
+  // โหลด machine status ใน background
+  setTimeout(()=>{ if(typeof render==='function') render(); },600);
 }
 // ══════════════════════════════════════════════════════════
 // DAILY CHECKLIST SYSTEM v9.2 — Compact | Fast | No Whitespace
@@ -2412,11 +2409,11 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
 <div id="offbanner">⚠️ Offline Mode — ข้อมูลจะถูก Sync เมื่อมีการเชื่อมต่ออินเตอร์เน็ต</div>
 
 <div class="view-tab-bar">
-  <button class="vtb on" id="vtb-mach" onclick="if(window.switchViewTab)switchViewTab('machine')">
-    ⚙ <span class="tab-lbl">เครื่องจักร</span>
+  <button class="vtb" id="vtb-mach" onclick="if(window.switchViewTab)switchViewTab('machine')">
+    ⚙ <span class="tab-lbl">สถานะเครื่องจักร</span>
     <span id="vtb-mach-cnt" style="background:rgba(59,130,246,.15);color:var(--a2);padding:1px 6px;border-radius:10px;font-size:10px"></span>
   </button>
-  <button class="vtb" id="vtb-check" onclick="if(window.switchViewTab)switchViewTab('check')">
+  <button class="vtb on" id="vtb-check" onclick="if(window.switchViewTab)switchViewTab('check')">
     📋 <span class="tab-lbl">ตรวจรายวัน</span>
     <span id="vtb-check-cnt" style="background:rgba(16,185,129,.15);color:var(--ag);padding:1px 6px;border-radius:10px;font-size:10px"></span>
   </button>
@@ -2430,30 +2427,30 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
 </div>
 
 <main id="main">
-  <div id="stats">
+  <div id="stats" style="display:none">
     <div class="sc" style="--cc:var(--a)" onclick="fStat('')"><div class="scn" id="nAll">0</div><div class="scl">เครื่องจักรทั้งหมด</div></div>
     <div class="sc" style="--cc:var(--ok)" onclick="fStat('ปกติ')"><div class="scn" id="nOk">0</div><div class="scl">✓ ปกติ</div></div>
     <div class="sc" style="--cc:var(--wn)" onclick="fStat('ผิดปกติ')"><div class="scn" id="nWn">0</div><div class="scl">⚠ ผิดปกติ</div></div>
     <div class="sc" style="--cc:var(--er)" onclick="fStat('ไม่สามารถทำงานได้')"><div class="scn" id="nEr">0</div><div class="scl">✗ ทำงานไม่ได้</div></div>
     <div class="sc" style="--cc:var(--of)" onclick="fStat('ชำรุด')"><div class="scn" id="nOf">0</div><div class="scl">🔧 ชำรุด/อื่นๆ</div></div>
   </div>
-  <div id="fbar">
+  <div id="fbar" style="display:none">
     <div class="fchip"><span>กลุ่ม</span><select id="fg" onchange="applyF()"><option value="">ทั้งหมด</option><option value="A">A — สำคัญมาก</option><option value="B">B — สำคัญ</option><option value="C">C — ทั่วไป</option></select></div>
     <div class="fchip"><span>📍</span><select id="fl" onchange="applyF()"><option value="">ทุกตำแหน่ง</option></select></div>
     <div class="fchip"><span>สถานะ</span><select id="fs" onchange="applyF()"><option value="">ทั้งหมด</option><option value="ปกติ">ปกติ</option><option value="ผิดปกติ">ผิดปกติ</option><option value="ไม่สามารถทำงานได้">ทำงานไม่ได้</option><option value="ไม่ได้ใช้งานแล้ว">ไม่ได้ใช้</option><option value="ชำรุด">ชำรุด</option></select></div>
     <span class="rc" id="rc"></span>
   </div>
-  <div id="vcont">
+  <div id="vcont" style="display:none">
     <div id="tv" style="display:none"><div class="twrap"><table><thead><tr><th onclick="srt('seq')" style="width:42px">#</th><th style="width:38px">รูป</th><th onclick="srt('code')" style="width:80px">รหัส</th><th onclick="srt('name')">ชื่อเครื่องจักร</th><th onclick="srt('grp')" style="width:48px">กลุ่ม</th><th onclick="srt('loc')" style="width:120px">ตำแหน่ง</th><th onclick="srt('status')" style="width:130px">สถานะ</th><th style="width:180px">หมายเหตุ/ใบแจ้งซ่อม</th><th style="width:85px">วันที่</th><th style="width:75px">ผู้ตรวจ</th></tr></thead><tbody id="tb"></tbody></table></div></div>
     <div id="cv"><div id="cgrid"></div></div>
     <div id="kv" style="display:none"><div id="clist"></div></div>
     <div class="empty" id="emp" style="display:none"><div style="font-size:44px;margin-bottom:10px">🔍</div><div style="font-size:15px;font-weight:600;color:var(--t2)">ไม่พบรายการ</div></div>
   </div>
-</main>
 
-<!-- REPAIR DASHBOARD VIEW -->
-<div id="repairView">
-  <div style="padding:10px 14px 0;min-height:50vh">
+
+  <!-- REPAIR DASHBOARD VIEW -->
+<div id="repairView" style="display:none">
+  <div style="padding:10px 14px 0">
     <!-- Summary cards -->
     <div class="repair-summary-cards">
       <div class="rs-card"><div class="rs-num" id="rsCntAll" style="color:var(--a)">0</div><div class="rs-lbl">ทั้งหมด</div></div>
@@ -2477,8 +2474,8 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
   </div>
 </div>
 
-<!-- DAILY CHECKLIST VIEW -->
-<div id="checkView" style="display:none">
+  <!-- DAILY CHECKLIST VIEW -->
+<div id="checkView" style="display:block">
 
   <!-- STICKY COMMAND BAR -->
   <div id="dcl-sticky">
@@ -2531,7 +2528,7 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
 
 </div>
 
-<!-- KPI EXECUTIVE DASHBOARD --><!-- KPI EXECUTIVE DASHBOARD --><!-- KPI EXECUTIVE DASHBOARD -->
+  <!-- KPI EXECUTIVE DASHBOARD --><!-- KPI EXECUTIVE DASHBOARD --><!-- KPI EXECUTIVE DASHBOARD -->
 <div id="kpiView" style="display:none">
   <!-- KPI Cards -->
   <div class="kpi-grid">
@@ -2571,6 +2568,9 @@ document.getElementById('lb').addEventListener('click',e=>{if(e.target===documen
   <div class="kpi-section">📋 ประวัติการตรวจ 7 วันล่าสุด</div>
   <div style="padding:0 14px 16px"><div id="kpi-hist-chart" style="background:var(--card);border:1px solid var(--b);border-radius:var(--r);padding:12px;overflow-x:auto"></div></div>
 </div>
+
+</main>
+
 
 <nav id="bnn"><div class="bni">
   <button class="bnb on" id="bn-h" onclick="switchViewTab('machine');botN('h')"><span class="bnb-i">⚙</span><span>เครื่องจักร</span></button>
